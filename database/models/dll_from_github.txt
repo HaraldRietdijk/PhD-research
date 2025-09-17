@@ -1,0 +1,679 @@
+--------------------------------------------------------
+--  DDL for View HFT_TTT_AGM_F1_SCORE_V
+--------------------------------------------------------
+
+  CREATE OR REPLACE FORCE VIEW "HFT_TTT_AGM_F1_SCORE_V" ("METRICS_ID", "HFT_TREATMENT_ID", "ALGORITHM", "WEEKDAY", "F1_SCORE", "TRUE_NEGATIVE", "TRUE_POSITIVE", "FALSE_NEGATIVE", "FALSE_POSITIVE", "NUMBER_OF_OBSERVATIONS", "THRESHOLD") AS 
+  select   mtc.id metrics_id
+,        mtc.hft_treatment_id
+,        mdl.ALGORITHM
+,        mtc.weekday
+,        mtc.f1_score
+,        mtc.true_negative
+,        mtc.true_positive
+,        mtc.false_negative
+,        mtc.false_positive
+,        mtc.number_of_observations
+,        mtc.threshold
+from hft_metrics_t mtc
+,    hft_model_t mdl
+,    (select    distinct ttt.treatment_id hft_treatment_id
+        ,        mdl.ALGORITHM
+        ,        mtc.f1_score
+        ,        max(mtc.F1_SCORE) over (partition by ttt.treatment_id,mtc.weekday) max_f1_score
+        ,        mtc.weekday
+        from hft_model_t mdl
+        ,    hft_metrics_t mtc
+        ,    hft_treatment_t ttt
+        where mdl.id=mtc.hft_model_id
+        and mtc.hft_treatment_id=ttt.treatment_id
+         ) max
+ where max.hft_treatment_id=mtc.hft_treatment_id
+ and   mdl.id=mtc.hft_model_id
+ and   mtc.f1_score=max.max_f1_score
+ group by  mtc.id 
+,        mtc.hft_treatment_id
+,        mdl.ALGORITHM
+,        mtc.weekday
+,        mtc.f1_score
+,        mtc.true_negative
+,        mtc.true_positive
+,        mtc.false_negative
+,        mtc.false_positive
+,        mtc.number_of_observations
+,        mtc.threshold
+order by mtc.weekday;
+
+--------------------------------------------------------
+--  DDL for Function HFT_ACC_SCORE_PER_DAY_HR_F
+--------------------------------------------------------
+
+
+CREATE OR REPLACE FUNCTION "HFT_ACC_SCORE_PER_DAY_HR_F" (p_treatment_id in number,p_weekday in number,p_algorithm in varchar,p_hour in number) return number is
+
+/* calculate accuracy on predictions per weekday and hour
+Accuracy (ACC) = ? True positive + ? True negative/ ? Total population
+
+
+TP= pred=actual=>1=1
+TN= pred=actual=>0=0
+FN= pred<>actual=>0<>1
+FP= pred<>actual=>1<>0*/
+
+cursor c_cat (b_treatment_id in number
+             ,b_weekday in number 
+             ,b_algorithm in varchar2
+             ,b_hour in number)is
+       select pdn.steps_cat
+       ,      pdn.prediction_cat
+       from hft_prediction_t pdn
+       ,    hft_data_t dta
+       ,    hft_model_t mdl
+       where mdl.id=pdn.hft_model_t_id
+       and   mdl.algorithm=b_algorithm
+       and   pdn.hft_data_t_id=dta.id
+       and   dta.weekday=b_weekday
+       and   dta.hour=b_hour
+       and   dta.treatment_id=b_treatment_id;
+       
+r_cat c_cat%rowtype;       
+
+l_treatment_id number;
+l_weekday number;
+l_algorithm VARCHAR2(10);
+l_hour number;
+l_steps_cat number;
+l_pred_cat number;
+l_tn number:=0;
+l_tp number:=0;
+l_fp number:=0;
+l_fn number:=0;
+l_accuracy number:=0;
+
+begin
+l_treatment_id:=p_treatment_id;
+l_weekday:=p_weekday;
+l_algorithm:=p_algorithm;
+l_hour:=p_hour;
+open c_cat(b_treatment_id=>l_treatment_id,
+           b_weekday=>l_weekday,
+           b_algorithm=>l_algorithm,
+           b_hour=>l_hour);
+  fetch c_cat into r_cat;           
+  while c_cat%found loop 
+    l_steps_cat:=r_cat.steps_cat;
+    l_pred_cat:=r_cat.prediction_cat;
+    if l_steps_cat=0 and l_pred_cat=0 then
+       l_tn:=l_tn+1;
+    end if;
+    if l_steps_cat=0 and l_pred_cat=1 then
+       l_fp:=l_fp+1;
+    end if;
+    if l_steps_cat=1 and l_pred_cat=1 then
+       l_tp:=l_tp+1;
+    end if;
+    if l_steps_cat=1 and l_pred_cat=0 then
+       l_fn:=l_fn+1;
+    end if;
+    fetch c_cat into r_cat;
+   end loop; 
+   close c_cat;
+   --dbms_output.put_line('fp '||l_fp||' fn '||l_fn||' tp '||l_tp||' tn '||l_tn);
+  /* precision=TP/(TP+FP)
+     recall=TP/(TP+FN)
+
+     TP= pred=actual=>1=1
+     TN= pred=actual=>0=0
+     FN= pred<>actual=>0<>1
+     FP= pred<>actual=>1<>0*/
+   if l_tp+l_fp+l_tn+l_fn=0 then
+      l_accuracy:=-1;
+   else  
+      --Accuracy (ACC) = ? True positive + ? True negative/ ? Total population
+      l_accuracy:= (l_tp+l_tn)/(l_tp+l_fp+l_tn+l_fn);
+     
+   end if;   
+   
+   --dbms_output.put_line('precision '||l_precision||' l_recall '||l_recall||' F1 '||l_f1);
+   return l_accuracy;
+end;
+
+/
+--------------------------------------------------------
+--  DDL for Function HFT_F1_SCORE_PER_DAY_CM_F
+--------------------------------------------------------
+
+  CREATE OR REPLACE FUNCTION "HFT_F1_SCORE_PER_DAY_CM_F" (p_treatment_id in number,p_weekday in number,p_algorithm in varchar) return varchar is
+
+/* calculate f1 on predictions
+F1=2* (precision*recall/precision+recall)
+precision=TP/(TP+FP)
+recall=TP/(TP+FN)
+
+TP= pred=actual=>1=1
+TN= pred=actual=>0=0
+FN= pred<>actual=>0<>1
+FP= pred<>actual=>1<>0*/
+
+cursor c_cat (b_treatment_id in number
+             ,b_weekday in number 
+             ,b_algorithm in varchar2)is
+       select pdn.steps_cat
+       ,      pdn.prediction_cat
+       from hft_prediction_t pdn
+       ,    hft_data_t dta
+       ,    hft_model_t mdl
+       where mdl.id=pdn.hft_model_t_id
+       and   mdl.algorithm=b_algorithm
+       and   pdn.hft_data_t_id=dta.id
+       and   dta.weekday=b_weekday
+       and   dta.treatment_id=b_treatment_id;
+       
+r_cat c_cat%rowtype;       
+
+l_treatment_id number;
+l_weekday number;
+l_algorithm VARCHAR2(10);
+l_steps_cat number;
+l_pred_cat number;
+l_tn number:=0;
+l_tp number:=0;
+l_fp number:=0;
+l_fn number:=0;
+l_precision number :=0;
+l_recall number:=0;
+l_f1 varchar2(200);
+
+begin
+l_treatment_id:=p_treatment_id;
+l_weekday:=p_weekday;
+l_algorithm:=p_algorithm;
+
+open c_cat(b_treatment_id=>l_treatment_id,
+           b_weekday=>l_weekday,
+           b_algorithm=>l_algorithm);
+  fetch c_cat into r_cat;           
+  while c_cat%found loop 
+    l_steps_cat:=r_cat.steps_cat;
+    l_pred_cat:=r_cat.prediction_cat;
+    if l_steps_cat=0 and l_pred_cat=0 then
+       l_tn:=l_tn+1;
+    end if;
+    if l_steps_cat=0 and l_pred_cat=1 then
+       l_fp:=l_fp+1;
+    end if;
+    if l_steps_cat=1 and l_pred_cat=1 then
+       l_tp:=l_tp+1;
+    end if;
+    if l_steps_cat=1 and l_pred_cat=0 then
+       l_fn:=l_fn+1;
+    end if;
+    fetch c_cat into r_cat;
+   end loop; 
+   close c_cat;
+--   dbms_output.put_line('fp '||l_fp||' fn '||l_fn||' tp '||l_tp||' tn '||l_tn);
+   if l_tp+l_fp=0 then
+      l_f1:=-1;
+   else   
+      l_precision:= l_tp/(l_tp+l_fp);
+      if l_tp+l_fn=0 then
+         l_f1:=-1;
+      else      
+         l_recall:=l_tp/(l_tp+l_fn);
+         l_f1:=2*((l_precision*l_recall)/(l_precision+l_recall));
+      end if;
+   end if;   
+   
+   l_f1:=('tp'||l_tp||'fn'||l_fn||' fp '||l_fp||' tn '||l_tn);
+   return l_f1;
+end;
+
+/
+--------------------------------------------------------
+--  DDL for Function HFT_F1_SCORE_PER_DAY_F
+--------------------------------------------------------
+
+  CREATE OR REPLACE FUNCTION "HFT_F1_SCORE_PER_DAY_F" (p_treatment_id in number,p_weekday in number,p_algorithm in varchar) return number is
+
+/* calculate f1 on predictions
+F1=2* (precision*recall/precision+recall)
+precision=TP/(TP+FP)
+recall=TP/(TP+FN)
+
+TP= pred=actual=>1=1
+TN= pred=actual=>0=0
+FN= pred<>actual=>0<>1
+FP= pred<>actual=>1<>0*/
+
+cursor c_cat (b_treatment_id in number
+             ,b_weekday in number 
+             ,b_algorithm in varchar2)is
+       select pdn.steps_cat
+       ,      pdn.prediction_cat
+       from hft_prediction_t pdn
+       ,    hft_data_t dta
+       ,    hft_model_t mdl
+       where mdl.id=pdn.hft_model_t_id
+       and   mdl.algorithm=b_algorithm
+       and   pdn.hft_data_t_id=dta.id
+       and   dta.weekday=b_weekday
+       and   dta.treatment_id=b_treatment_id;
+       
+r_cat c_cat%rowtype;       
+
+l_treatment_id number;
+l_weekday number;
+l_algorithm VARCHAR2(10);
+l_steps_cat number;
+l_pred_cat number;
+l_tn number:=0;
+l_tp number:=0;
+l_fp number:=0;
+l_fn number:=0;
+l_precision number :=0;
+l_recall number:=0;
+l_f1 number:=0;
+
+begin
+l_treatment_id:=p_treatment_id;
+l_weekday:=p_weekday;
+l_algorithm:=p_algorithm;
+
+open c_cat(b_treatment_id=>l_treatment_id,
+           b_weekday=>l_weekday,
+           b_algorithm=>l_algorithm);
+  fetch c_cat into r_cat;           
+  while c_cat%found loop 
+    l_steps_cat:=r_cat.steps_cat;
+    l_pred_cat:=r_cat.prediction_cat;
+    if l_steps_cat=0 and l_pred_cat=0 then
+       l_tn:=l_tn+1;
+    end if;
+    if l_steps_cat=0 and l_pred_cat=1 then
+       l_fp:=l_fp+1;
+    end if;
+    if l_steps_cat=1 and l_pred_cat=1 then
+       l_tp:=l_tp+1;
+    end if;
+    if l_steps_cat=1 and l_pred_cat=0 then
+       l_fn:=l_fn+1;
+    end if;
+    fetch c_cat into r_cat;
+   end loop; 
+   close c_cat;
+--   dbms_output.put_line('fp '||l_fp||' fn '||l_fn||' tp '||l_tp||' tn '||l_tn);
+   if l_tp+l_fp=0 then
+      l_f1:=-1;
+   else   
+      l_precision:= l_tp/(l_tp+l_fp);
+      if l_tp+l_fn=0 then
+         l_f1:=-1;
+      else      
+         l_recall:=l_tp/(l_tp+l_fn);
+         l_f1:=2*((l_precision*l_recall)/(l_precision+l_recall));
+      end if;
+   end if;   
+   
+--   dbms_output.put_line('precision '||l_precision||' l_recall '||l_recall||' F1 '||l_f1);
+   return l_f1;
+end;
+
+/
+--------------------------------------------------------
+--  DDL for Function HFT_SUM_STEPS_DAY_F
+--------------------------------------------------------
+
+  CREATE OR REPLACE FUNCTION "HFT_SUM_STEPS_DAY_F" (p_treatment_id in number,p_year in number,p_week in number,p_weekday in number,p_hour in number) return number is
+
+/* sum the steps of a day */
+cursor c_sum_steps (b_treatment_id in number,
+                    b_year in number,
+                    b_week in number,
+                    b_weekday in number,
+                    b_hour in number) is
+                  
+select sum(sum_steps_hour) sum_steps
+from hft_sum_steps_v
+where treatment_id=b_treatment_id
+and year= b_year
+and week=b_week
+and weekday=b_weekday
+and hour=b_hour;
+
+r_sum_steps c_sum_steps%rowtype;
+
+l_treatment_id number;
+l_year number;
+l_week number;
+l_weekday number;
+l_sum_steps number;
+l_hour number;
+begin
+ l_treatment_id:=p_treatment_id;
+ l_year:=p_year;
+ l_week:=p_week;
+ l_weekday:=p_weekday;
+ l_hour:=p_hour;
+ 
+ open c_sum_steps(b_treatment_id=>l_treatment_id,
+                  b_year=>l_year,
+                  b_week=>l_week,
+                  b_weekday=>l_weekday,
+                  b_hour=>l_hour);
+ fetch c_sum_steps into r_sum_steps;
+ l_sum_steps:=r_sum_steps.sum_steps;
+ close c_sum_steps;
+ 
+ return l_sum_steps;
+ end;
+
+/
+--------------------------------------------------------
+--  DDL for Function HFT_SUM_STEPS_F
+--------------------------------------------------------
+
+  CREATE OR REPLACE FUNCTION "HFT_SUM_STEPS_F" (p_treatment_id in number,p_year in number,p_week in number,p_weekday in number) return number is
+
+/* sum the steps of a day */
+cursor c_sum_steps (b_treatment_id in number,
+                    b_year in number,
+                    b_week in number,
+                    b_weekday in number) is
+                  
+select sum(steps) sum_steps
+from hft_data_t
+where treatment_id=b_treatment_id
+and year= b_year
+and week=b_week
+and weekday=b_weekday;
+
+r_sum_steps c_sum_steps%rowtype;
+
+l_treatment_id number;
+l_year number;
+l_week number;
+l_weekday number;
+l_sum_steps number:=0;
+begin
+ l_treatment_id:=p_treatment_id;
+ l_year:=p_year;
+ l_week:=p_week;
+ l_weekday:=p_weekday;
+ 
+ open c_sum_steps(b_treatment_id=>l_treatment_id,
+                  b_year=>l_year,
+                  b_week=>l_week,
+                  b_weekday=>l_weekday);
+ fetch c_sum_steps into r_sum_steps;
+ l_sum_steps:=r_sum_steps.sum_steps;
+ close c_sum_steps;
+ 
+ return l_sum_steps;
+ end;
+
+/
+--------------------------------------------------------
+--  DDL for Function HFT_SUM_STEPS_HOUR_F
+--------------------------------------------------------
+CREATE OR REPLACE FUNCTION "HFT_SUM_STEPS_HOUR_F" (p_treatment_id in number,p_year in number,p_week in number,p_weekday in number,p_hour in number) return number is
+
+/* sum the steps of a day from 7 o'clock till midnight running total per hour */
+cursor c_sum_steps (b_treatment_id in number,
+                    b_year in number,
+                    b_week in number,
+                    b_weekday in number,
+                    b_hour in number) is
+                  
+select sum(steps) sum_steps
+from hft_data_t
+where treatment_id=b_treatment_id
+and year= b_year
+and week=b_week
+and weekday=b_weekday
+and hour>=7
+and hour<=b_hour;
+
+r_sum_steps c_sum_steps%rowtype;
+
+l_treatment_id number;
+l_year number;
+l_week number;
+l_weekday number;
+l_sum_steps number;
+l_hour number;
+begin
+ l_treatment_id:=p_treatment_id;
+ l_year:=p_year;
+ l_week:=p_week;
+ l_weekday:=p_weekday;
+ l_hour:=p_hour;
+ open c_sum_steps(b_treatment_id=>l_treatment_id,
+                  b_year=>l_year,
+                  b_week=>l_week,
+                  b_weekday=>l_weekday,
+                  b_hour=>l_hour);
+ fetch c_sum_steps into r_sum_steps;
+ if c_sum_steps%found then
+    l_sum_steps:=r_sum_steps.sum_steps;
+ end if;
+ close c_sum_steps;
+ 
+ return nvl(l_sum_steps,0);
+ end;
+
+/
+--------------------------------------------------------
+--  DDL for Function HFT_F1_SCORE_PER_DAY_HR_F
+--------------------------------------------------------
+
+  CREATE OR REPLACE FUNCTION "HFT_F1_SCORE_PER_DAY_HR_F" (p_treatment_id in number,p_weekday in number,p_algorithm in varchar,p_hour in number) return number is
+
+/* calculate f1 on predictions per weekday and hour
+F1=2* (precision*recall/precision+recall)
+precision=TP/(TP+FP)
+recall=TP/(TP+FN)
+
+TP= pred=actual=>1=1
+TN= pred=actual=>0=0
+FN= pred<>actual=>0<>1
+FP= pred<>actual=>1<>0*/
+
+cursor c_cat (b_treatment_id in number
+             ,b_weekday in number 
+             ,b_algorithm in varchar2
+             ,b_hour in number)is
+       select pdn.steps_cat
+       ,      pdn.prediction_cat
+       from hft_prediction_t pdn
+       ,    hft_data_t dta
+       ,    hft_model_t mdl
+       where mdl.id=pdn.hft_model_t_id
+       and   mdl.algorithm=b_algorithm
+       and   pdn.hft_data_t_id=dta.id
+       and   dta.weekday=b_weekday
+       and   dta.hour=b_hour
+       and   dta.treatment_id=b_treatment_id;
+       
+r_cat c_cat%rowtype;       
+
+l_treatment_id number;
+l_weekday number;
+l_algorithm VARCHAR2(10);
+l_hour number;
+l_steps_cat number;
+l_pred_cat number;
+l_tn number:=0;
+l_tp number:=0;
+l_fp number:=0;
+l_fn number:=0;
+l_precision number :=0;
+l_recall number:=0;
+l_f1 number:=0;
+
+begin
+l_treatment_id:=p_treatment_id;
+l_weekday:=p_weekday;
+l_algorithm:=p_algorithm;
+l_hour:=p_hour;
+open c_cat(b_treatment_id=>l_treatment_id,
+           b_weekday=>l_weekday,
+           b_algorithm=>l_algorithm,
+           b_hour=>l_hour);
+  fetch c_cat into r_cat;           
+  while c_cat%found loop 
+    l_steps_cat:=r_cat.steps_cat;
+    l_pred_cat:=r_cat.prediction_cat;
+    if l_steps_cat=0 and l_pred_cat=0 then
+       l_tn:=l_tn+1;
+    end if;
+    if l_steps_cat=0 and l_pred_cat=1 then
+       l_fp:=l_fp+1;
+    end if;
+    if l_steps_cat=1 and l_pred_cat=1 then
+       l_tp:=l_tp+1;
+    end if;
+    if l_steps_cat=1 and l_pred_cat=0 then
+       l_fn:=l_fn+1;
+    end if;
+    fetch c_cat into r_cat;
+   end loop; 
+   close c_cat;
+   --dbms_output.put_line('fp '||l_fp||' fn '||l_fn||' tp '||l_tp||' tn '||l_tn);
+  /* precision=TP/(TP+FP)
+     recall=TP/(TP+FN)
+
+     TP= pred=actual=>1=1
+     TN= pred=actual=>0=0
+     FN= pred<>actual=>0<>1
+     FP= pred<>actual=>1<>0*/
+   if l_tp+l_fp=0 then
+      l_f1:=-1;
+   else   
+      l_precision:= l_tp/(l_tp+l_fp);
+      if l_tp+l_fn=0 then
+         l_f1:=-1;
+      else      
+         l_recall:=l_tp/(l_tp+l_fn);
+         if l_precision+l_recall=0 then
+            l_f1:=-1;
+         else
+            l_f1:=2*((l_precision*l_recall)/(l_precision+l_recall));
+         end if;   
+      end if;
+   end if;   
+   
+   --dbms_output.put_line('precision '||l_precision||' l_recall '||l_recall||' F1 '||l_f1);
+   return l_f1;
+end;
+
+/
+--------------------------------------------------------
+--  DDL for Procedure HFT_INSERT_INTO_HFT_DATA_T_P
+--------------------------------------------------------
+set define off;
+
+  CREATE OR REPLACE PROCEDURE "HFT_INSERT_INTO_HFT_DATA_T_P" (
+  p_mdate in date,
+  p_steps in number,
+  p_treatment_id in number,
+  p_year in number,
+  p_week in number,
+  p_weekday in number,
+  p_hour in number,
+  p_date in date
+  )
+	 is
+begin
+insert into hft_data_t (	
+                 mdate
+                , steps
+                , year
+                , week
+                , weekday
+                , hour
+                , treatment_id)
+	values (      p_mdate
+                , p_steps
+                , p_year
+                , p_week
+                , p_weekday
+                , p_hour
+                , p_treatment_id
+	);
+	commit;
+end;
+
+/
+--------------------------------------------------------
+--  DDL for Procedure HFT_INSERT_INTO_HFT_MODEL_T_P
+--------------------------------------------------------
+set define off;
+
+  CREATE OR REPLACE PROCEDURE "HFT_INSERT_INTO_HFT_MODEL_T_P" (
+  p_name in varchar,
+  p_algorithm in varchar,
+  p_destination in varchar
+  )
+	 is
+begin
+insert into hft_model_t (	
+                 name
+                , algorithm
+                , destination
+                , usedate
+                )
+	values (      p_name
+                , p_algorithm
+                , p_destination
+                , sysdate
+               
+	);
+	commit;
+end;
+
+/
+--------------------------------------------------------
+--  DDL for Procedure INSERT_INTO_HFT_PREDICTION_T_F
+--------------------------------------------------------
+set define off;
+
+  CREATE OR REPLACE PROCEDURE "INSERT_INTO_HFT_PREDICTION_T_F" (P_HFT_DATA_T_ID in integer,p_HFT_MODEL_T_ID in integer,p_STEPS_CAT in integer
+,p_PREDICTION_CAT in integer)
+
+	 is
+begin
+insert into hft_prediction_t (	
+                  hft_data_t_id
+                , hft_model_t_id
+                , steps_cat
+                , prediction_cat
+                )
+	values (        p_hft_data_t_id
+                , p_hft_model_t_id
+                , p_steps_cat
+                , p_prediction_cat
+               
+	);
+	commit;
+end;
+
+/
+
+Niet goed???
+--------------------------------------------------------
+--  DDL for View HFT_MAX_F1_SCORE_V
+--------------------------------------------------------
+
+  CREATE OR REPLACE FORCE VIEW "HFT_MAX_F1_SCORE_V" ("MAX_SCORE", "WEEKDAY", "ALGORITHM") AS 
+  select max(algo.score)max_score
+     ,      algo.weekday weekday
+     ,      algo.algorithm algorithm
+    from
+       (select distinct(algorithm)algorithm
+        ,      avg(f1_score_real_day) score
+        ,      fss.weekday
+        from hft_f1_scores_t fss
+        where fss.weekday not in (5,6)
+        group by algorithm,fss.weekday
+         )algo
+        group by algo.weekday,algo.algorithm
+        order by weekday,max(algo.score);
