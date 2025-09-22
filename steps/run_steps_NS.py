@@ -9,6 +9,7 @@ from steps.step_7.step_7 import do_step_7
 from steps.step_7.step_7b import do_step_7b
 from steps.step_8.step_8 import do_step_8
 from steps.step_9.step_9 import do_step_9
+from steps.step_10.step_10 import do_step_10
 
 import sys
 
@@ -37,3 +38,5 @@ def do_run_NS(app):
         do_step_8(app)
     if (run_type=="step9") or run_all_steps:
         do_step_9(app)
+    if (run_type=="step10") or run_all_steps:
+        do_step_10(app)
