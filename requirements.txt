@@ -1,7 +1,9 @@
 Flask
-SqlAlchemy
+SqlAlchemy==2.0.25
 pymysql
 numpy
-pandas
+pandas==2.1.4
 scikit-learn
 matplotlib
+seaborn
+statsmodels

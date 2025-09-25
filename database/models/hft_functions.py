@@ -11,7 +11,7 @@ def make_functions():
         )
 
     hft_sum_steps_hour_f = (
-        "CREATE DEFINER=`root`@`localhost` FUNCTION `hft_sum_steps_hour_f`(p_treatment_id int,p_year int,p_week int,p_weekday int,p_hour int) RETURNS int \n"
+        "CREATE FUNCTION `hft_sum_steps_hour_f`(p_treatment_id int,p_year int,p_week int,p_weekday int,p_hour int) RETURNS int \n"
         "DETERMINISTIC \n"
         "BEGIN \n"
         "declare sum_steps_hour int DEFAULT 0;\n"
@@ -41,7 +41,7 @@ def make_functions():
         DDL(drop_fn)
         )
     hft_sum_steps_f = (
-        "CREATE DEFINER=`root`@`localhost` FUNCTION `hft_sum_steps_f`(p_treatment_id int,p_year int,p_week int,p_weekday int) RETURNS int \n"
+        "CREATE FUNCTION `hft_sum_steps_f`(p_treatment_id int,p_year int,p_week int,p_weekday int) RETURNS int \n"
         "DETERMINISTIC \n"
         "BEGIN \n"
         "declare sum_steps int DEFAULT 0;\n"
