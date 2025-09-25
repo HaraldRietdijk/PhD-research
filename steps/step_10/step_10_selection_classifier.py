@@ -1,4 +1,5 @@
 import logging
+import numpy as np
 
 from sklearn.model_selection import GridSearchCV
 from sklearn.metrics import accuracy_score, f1_score, roc_auc_score
@@ -17,6 +18,12 @@ def fit_models(X_train, Y_train):
         if name in ['OCS','SGDOC']:
             fitted_models[name] = GridSearchCV(regressor, parameters, scoring='accuracy', cv=2).fit(X_train, Y_train).best_estimator_
         else:
+            newDF = X_train.copy()
+            newDF.replace(np.nan, 'error', inplace =True)
+            
+            # # cast newDF in the same type of X_train
+            # newDF = newDF.astype(type(X_train))
+            newDF.to_csv('newDF_train.csv', sep=',')
             fitted_models[name] = GridSearchCV(regressor, parameters, cv=2).fit(X_train, Y_train).best_estimator_
     return fitted_models
 
