@@ -1,6 +1,6 @@
 from steps.step_generic_code.dataframe_knee_operations import get_dataframe
 from steps.step_generic_code.general_functions import start_logging
-
+from steps.step_generic_code.general_variables import 
 
 def do_step_10(app):
     base_folder='results/fs_shap'
