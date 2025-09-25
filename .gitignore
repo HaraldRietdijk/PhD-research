@@ -64,4 +64,4 @@ Thumbs.db
 *.wmv
 
 # Virtual environment
-ltp/
+venv
