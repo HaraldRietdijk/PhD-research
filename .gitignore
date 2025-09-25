@@ -62,3 +62,6 @@ Thumbs.db
 *.flv
 *.mov
 *.wmv
+
+# Virtual environment
+venv
