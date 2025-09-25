@@ -37,7 +37,7 @@ def add_result_column(app, result, features_df, result_type, moment, value_type,
     return features_df
 
 def get_all_features(app, nr_of_classes):
-    print('Step 8: Getting dataframes for ' + str(nr_of_classes) + ' classes')
+    print('Step 10: Getting dataframes for ' + str(nr_of_classes) + ' classes')
     result = app.session.query(CLINICAL_PICTURE.treatment_id, PATIENT_JOB_RECOVERY.definite_return_to_work_weeks,
                                PatientRTWClass.class_id, OPERATION_DATA.operation_type, OPERATION_DATA.los,
                                PATIENT_JOB.hours_per_week, PATIENT_JOB.type_of_work, PATIENT_JOB.breadwinner,
