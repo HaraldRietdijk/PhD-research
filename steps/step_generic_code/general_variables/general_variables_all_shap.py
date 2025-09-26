@@ -68,7 +68,7 @@ FITTING_PARAMETERS={
 
 CLASSIFIERS = [('SVC',SVC(),False),
                ('LR', LogisticRegression(),True),
-               ('LDA',LinearDiscriminantAnalysis,True),
+               ('LDA',LinearDiscriminantAnalysis(),True),
                ('GBC', GradientBoostingClassifier(),True),
                ('ADA',AdaBoostClassifier(),True),
                ('RF',RandomForestClassifier(),True),
@@ -77,7 +77,7 @@ CLASSIFIERS = [('SVC',SVC(),False),
 
 CLASSIFIERS_WITH_PARAMETERS = [('SVC',SVC(),False),
                ('LR', LogisticRegression(solver='liblinear'),True),
-               ('LDA',LinearDiscriminantAnalysis,True),
+               ('LDA',LinearDiscriminantAnalysis(),True),
                ('GBC', GradientBoostingClassifier(),True),
                ('ADA',AdaBoostClassifier(algorithm='SAMME'),True),
                ('RF',RandomForestClassifier(),True),
