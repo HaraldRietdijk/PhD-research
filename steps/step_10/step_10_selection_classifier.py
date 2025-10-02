@@ -20,9 +20,6 @@ def fit_models(X_train, Y_train):
         else:
             newDF = X_train.copy()
             newDF.replace(np.nan, 'error', inplace =True)
-            
-            # # cast newDF in the same type of X_train
-            # newDF = newDF.astype(type(X_train))
             newDF.to_csv('newDF_train.csv', sep=',')
             fitted_models[name] = GridSearchCV(regressor, parameters, cv=2).fit(X_train, Y_train).best_estimator_
     return fitted_models
