@@ -9,15 +9,15 @@ from steps.step_10.step_10_generic_selection import save_pickle_and_metrics
 def fit_models(X_train, Y_train):
     print("Step 10 CS: Fitting models")
     fitted_models = {}
-    for name, regressor, normalized in CLASSIFIERS:
+    for name, classifier, _, _ in CLASSIFIERS:
         print("Model: ", name)
         parameters=FITTING_PARAMETERS[name]
         log_text="Model {m}".format(m=name)
         logging.info(log_text)
         if name in ['OCS','SGDOC']:
-            fitted_models[name] = GridSearchCV(regressor, parameters, scoring='accuracy', cv=2).fit(X_train, Y_train).best_estimator_
+            fitted_models[name] = GridSearchCV(classifier, parameters, scoring='accuracy', cv=2).fit(X_train, Y_train).best_estimator_
         else:
-            fitted_models[name] = GridSearchCV(regressor, parameters, cv=2).fit(X_train, Y_train).best_estimator_
+            fitted_models[name] = GridSearchCV(classifier, parameters, cv=2).fit(X_train, Y_train).best_estimator_
     return fitted_models
 
 def get_scores_for_prediction(fitted_models, X_set, Y_set):

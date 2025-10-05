@@ -17,11 +17,10 @@ def do_step_10(app):
     start_logging(base_folder)
     # Get dataframe and fill Nan values with meadium values
     dataframes = get_dataframe(app, num_of_classes)
-    
     # Get list of features
     features = dataframes['X'].columns.tolist()
 
     ### Train models and save results
     folder = base_folder + '/classifiers'
     fitted_models = classifier_selection(app, folder, dataframes, num_of_classes)
-    plot_results(app, folder, num_of_classes)
+    # plot_results(app, folder, num_of_classes)
