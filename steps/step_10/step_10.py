@@ -12,14 +12,15 @@ def do_step_10(app):
     folder = base_folder
     # Logging and run administration
     start_logging(base_folder)
-    run_id = get_run_id(app,"Feature Selection", 'test', 10, 'NS')
-    # Get dataframe and fill Nan values with median values
-    dataframes = get_dataframe(app, num_of_classes)
-    # Get list of features
-    features = dataframes['X'].columns.tolist()
-    # fitted_models = classifier_selection(app, folder, dataframes, num_of_classes, run_id)
-    filter_methods_scores = get_filter_methods_scores(dataframes, features)
-    plot_results_per_method(folder, filter_methods_scores)
-    save_method_results(app, filter_methods_scores, run_id)
+    run_id = 398
+    # run_id = get_run_id(app,"Feature Selection", 'test', 10, 'NS')
+    # # Get dataframe and fill Nan values with median values
+    # dataframes = get_dataframe(app, num_of_classes)
+    # # Get list of features
+    # features = dataframes['X'].columns.tolist()
+    # # fitted_models = classifier_selection(app, folder, dataframes, num_of_classes, run_id)
+    # filter_methods_scores = get_filter_methods_scores(dataframes, features)
+    # plot_results_per_method(folder, filter_methods_scores)
+    # save_method_results(app, filter_methods_scores, run_id)
     plot_average_per_method(app, folder, run_id)
-    complete_run(app, run_id)
+    # complete_run(app, run_id)

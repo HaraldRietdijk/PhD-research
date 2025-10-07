@@ -10,7 +10,7 @@ def plot_scoring(scores, method, folder, model = None):
     plt.rcParams["font.family"] = "serif"
     x = np.arange(1,len(list(scores.values())[0][0])+1)
     fig, ax1 = plt.subplots()
-    ax1.set_xticks(np.arange(1, len(scores['accuracy'])+1, step = 4))
+    ax1.set_xticks(np.arange(1, len(x), step = 4))
     ax1.set_xlabel("Nr. of Features used")
     ax1.set_ylabel('Mertic score', fontsize='large', labelpad=30)
     lines = None
