@@ -57,9 +57,9 @@ def store_metrics_result(app, estimator_metrics_id, name, value, test_or_train):
     app.session.add(estimator_metrics_result)
     app.session.commit()
 
-def insert_model_metrics_into_database(app, regressor, pickle_model, name, dest, model_score, nr_of_classes, ALGORITHM_PARAMETERS):
+def insert_model_metrics_into_database(app, regressor, pickle_model, name, dest, model_score, nr_of_classes, ALGORITHM_PARAMETERS, run_id):
     model_id = insert_model_and_parameters_into_database(app, regressor, pickle_model, name, dest, ALGORITHM_PARAMETERS)
-    estimator_metrics = HFT_ESTIMATOR_METRICS_T(hft_model_id=model_id, nr_of_classes=nr_of_classes)
+    estimator_metrics = HFT_ESTIMATOR_METRICS_T(hft_model_id=model_id, nr_of_classes=nr_of_classes, hft_run_id = run_id)
     app.session.add(estimator_metrics)
     app.session.commit()
     for score, value in model_score[0].items():
@@ -67,11 +67,11 @@ def insert_model_metrics_into_database(app, regressor, pickle_model, name, dest,
     for score, value in model_score[1].items():
         store_metrics_result(app, estimator_metrics.id, score, value, 'train')
 
-def save_pickle_and_metrics(app, folder, fitted_models, models_scoring, nr_of_classes, ALGORITHM_PARAMETERS):
+def save_pickle_and_metrics(app, folder, fitted_models, models_scoring, nr_of_classes, ALGORITHM_PARAMETERS, run_id):
     print("Step 10 R/CS: Saving results")
     sub_folder='pkl_objects'
     dest = pickle_destination(folder,sub_folder)
     for name, estimator in fitted_models.items():
         pickle_model = save_model_to_disk(dest, name, estimator)
         scoring = (models_scoring['Test'][name], models_scoring['Train'][name])
-        insert_model_metrics_into_database(app, estimator, pickle_model, name, dest, scoring, nr_of_classes, ALGORITHM_PARAMETERS)
+        insert_model_metrics_into_database(app, estimator, pickle_model, name, dest, scoring, nr_of_classes, ALGORITHM_PARAMETERS, run_id)

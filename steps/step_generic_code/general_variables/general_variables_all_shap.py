@@ -104,6 +104,7 @@ CLASSIFIERS = [('LDA',LinearDiscriminantAnalysis(),True,28),
                ('LR', LogisticRegression(),True,32),
                ('SGD',SGDClassifier(),False,4),
                ('LSVC',LinearSVC(),True,12),
-               ('DT',DecisionTreeClassifier(max_depth=3, min_weight_fraction_leaf=0.1),True,14)]
+               ('DT',DecisionTreeClassifier(max_depth=3, min_weight_fraction_leaf=0.1),True,14)
+               ]
 
 ALGORITHM_PARAMETERS = { algorithm: [parameter for parameter in values[0]] for algorithm, values in FITTING_PARAMETERS.items()}

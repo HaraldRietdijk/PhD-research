@@ -45,11 +45,11 @@ def get_scores_for_prediction(fitted_models, X_set, Y_set):
         models_scoring[name] = model_score
     return models_scoring
 
-def classifier_selection(app, folder, dataframes, nr_of_classes):
+def classifier_selection(app, folder, dataframes, nr_of_classes, run_id):
     fitted_models = fit_models(dataframes['X_train'], dataframes['Y_class_train'])
     models_scoring = {}
     models_scoring['Test'] = get_scores_for_prediction(fitted_models, dataframes['X_test'], dataframes['Y_class_test'])
     models_scoring['Train'] = get_scores_for_prediction(fitted_models, dataframes['X_train'], dataframes['Y_class_train'])
-    save_pickle_and_metrics(app, folder, fitted_models, models_scoring, nr_of_classes, ALGORITHM_PARAMETERS)
+    save_pickle_and_metrics(app, folder, fitted_models, models_scoring, nr_of_classes, ALGORITHM_PARAMETERS, run_id)
     return fitted_models
 
