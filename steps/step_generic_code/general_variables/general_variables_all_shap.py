@@ -12,9 +12,26 @@ from sklearn.svm import SVC, NuSVC, LinearSVC
 from sklearn.tree import DecisionTreeClassifier
 import itertools
 
+
 FITTING_PARAMETERS={
-        'SVC' : [{'kernel':['sigmoid','rbf'],
-                 'probability':[True]
+        'LDA' : [{'solver':['lsqr', 'eigen'],
+                'shrinkage':['auto',None]
+                },
+                {'solver':['svd']
+                }],
+        'ADA' : [{'learning_rate':[0.1, 0.5, 1.0, 10.0],
+                'n_estimators':[5,10,15,20,25],
+                'algorithm':['SAMME']
+        }],
+        'RF'  : [{'criterion':['gini', 'entropy'],
+                'max_features':[0.1, 0.25, 0.5, 0.75, 'sqrt', 'log2', None],
+                'n_estimators':[5,10, 20,30]
+        }],
+        'GBC' : [{'loss':['log_loss', 'exponential'],
+                'learning_rate':[0.1, 0.5, 1.0, 10.0],
+                'n_estimators':[5,10, 20,30],
+                'criterion':['friedman_mse', 'squared_error'],
+                'min_samples_split':[2,10,20]
         }],
         'LR' : [{'C':[0.001, 0.01, 0.1, 1, 10, 100, 1000], 
                 'penalty':['elasticnet'],
@@ -42,46 +59,54 @@ FITTING_PARAMETERS={
                 'solver':['lbfgs','newton-cg', 'newton-cholesky', 'sag', 'saga'] 
                 }
         ],
-        'LDA' : [{'solver':['lsqr', 'eigen'],
-                'shrinkage':['auto',None]
-                },
-                {'solver':['svd']
-                }],
-        'GBC' : [{'loss':['log_loss', 'exponential'],
-                'learning_rate':[0.1, 0.5, 1.0, 10.0],
-                'n_estimators':[10, 50, 100, 500],
-                'criterion':['friedman_mse', 'squared_error'],
-                'min_samples_split':[2,10,50]
+        'SGD' : [{'fit_intercept':[True, False],
+                 'loss':['huber'],
+                 'penalty':['l1', 'l2', None],
+                 'alpha':[0.00001,0.0001],
+                 'epsilon':[0.2,0.25,0.3],
+                 'learning_rate':['constant', 'invscaling', 'adaptive'],
+                 'max_iter':[2000],
+                 'eta0':[0.5,1,2]
+               },{'fit_intercept':[True, False],
+                 'loss':['hinge', 'log_loss'],
+                 'penalty':['l1', 'l2', None],
+                 'alpha':[0.00001,0.0001],
+                 'learning_rate':['constant', 'invscaling', 'adaptive'],
+                 'max_iter':[2000],
+                 'eta0':[0.5,1,2]
+               }],
+        'LSVC': [{'penalty':['l2'],
+                  'loss':['hinge', 'squared_hinge'],
+                  'C':[0.5,1,2],
+                  'fit_intercept':[True,False],
+                  'dual':['auto'],
+                  'max_iter':[3000]
+               },{'penalty':['l1'],
+                  'loss':['squared_hinge'],
+                  'C':[0.5,1,2],
+                  'fit_intercept':[True,False],
+                  'dual':[False],
+                  'max_iter':[3000]
         }],
-        'ADA' : [{'learning_rate':[0.1, 0.5, 1.0, 10.0],
-                'n_estimators':[10, 50],
-                'algorithm':['SAMME']
-        }],
-        'RF' : [{'criterion':['gini', 'entropy'],
-                'max_features':[0.1, 0.25, 0.5, 0.75, 'sqrt', 'log2', None],
-                'n_estimators':[10, 50, 100, 500]
-        }],
-        'DT' : [{'criterion':['gini','entropy'],
-                'max_features':['sqrt','log2']
-        }]
+        'DT' : [{'criterion':['gini', 'entropy', 'log_loss'],
+                 'splitter':['best', 'random'],
+                 'max_depth':[5,10,None],
+                 'min_samples_split':[2,5,10],
+                 'min_samples_leaf':[2,5,10],
+                 'max_features':['sqrt', 'log2'],
+                 'max_leaf_nodes':[100,None]
+                }]
 }
 
-CLASSIFIERS = [('SVC',SVC(),False),
-               ('LR', LogisticRegression(),True),
-               ('LDA',LinearDiscriminantAnalysis(),True),
-               ('GBC', GradientBoostingClassifier(),True),
-               ('ADA',AdaBoostClassifier(),True),
-               ('RF',RandomForestClassifier(),True),
-               ('DT', DecisionTreeClassifier(),True),
-               ]
-
-CLASSIFIERS_WITH_PARAMETERS = [('SVC',SVC(),False),
-               ('LR', LogisticRegression(solver='liblinear'),True),
-               ('LDA',LinearDiscriminantAnalysis(),True),
-               ('GBC', GradientBoostingClassifier(),True),
-               ('ADA',AdaBoostClassifier(algorithm='SAMME'),True),
-               ('RF',RandomForestClassifier(),True),
-               ('DT', DecisionTreeClassifier(),True),
+CLASSIFIERS = [('LDA',LinearDiscriminantAnalysis(),True,28),
+               ('ADA',AdaBoostClassifier(n_estimators=15),True,14),
+               ('RF',RandomForestClassifier(n_estimators=10, max_depth=4, min_weight_fraction_leaf=0.1),True,14),
+               ('GBC', GradientBoostingClassifier(max_depth=2, min_weight_fraction_leaf=0.1),True,16),
+               ('LR', LogisticRegression(),True,32),
+               ('SGD',SGDClassifier(),False,4),
+               ('LSVC',LinearSVC(),True,12),
+               ('DT',DecisionTreeClassifier(max_depth=3, min_weight_fraction_leaf=0.1),True,14)
                ]
 
 ALGORITHM_PARAMETERS = { algorithm: [parameter for parameter in values[0]] for algorithm, values in FITTING_PARAMETERS.items()}
+
