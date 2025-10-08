@@ -1,4 +1,4 @@
-from sqlalchemy.sql import func
+from sqlalchemy.sql import func, or_
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -19,7 +19,6 @@ def plot_scoring(scores, method, folder, model = None):
             lines = ax1.plot(x, metric[0], color=metric[1], label=label)
         else:
             lines = lines + ax1.plot(x, metric[0], color=metric[1], label=label)
-    lines= lines + ax1.plot(x, scores['accuracy'][0], color=scores['accuracy'][1], label='extra')
     ax1.legend(lines, [line.get_label() for line in lines], loc='lower right')
     title = 'Metrics using ' + method
     name = folder + '/' + method + '.png'
@@ -42,7 +41,7 @@ def get_scores_per_method(app, run_id):
                                          func.avg(METHOD_RESULTS.accuracy), func.avg(METHOD_RESULTS.f1_score),
                                          func.avg(METHOD_RESULTS.precision), func.avg(METHOD_RESULTS.recall))\
                                   .join(METHOD_RESULTS, SELECTION_METHOD.id==METHOD_RESULTS.method_id)\
-                                  .filter(METHOD_RESULTS.run_id==run_id)\
+                                  .filter(or_(METHOD_RESULTS.run_id==run_id, run_id==-1))\
                                   .group_by(SELECTION_METHOD.name, METHOD_RESULTS.nr_features)\
                                   .order_by(SELECTION_METHOD.name, METHOD_RESULTS.nr_features).all()
     for row in average_accuracy:
@@ -55,17 +54,17 @@ def get_scores_per_method(app, run_id):
         scores_per_method[row[0]]['recall'][0].append(row[5])
     return scores_per_method
 
-def plot_results_per_method(folder, scores):
+def plot_results_per_method(folder, scores, run_id):
     print('Step 10: plotting filter methods results')
     folder = folder + '/plots'
     check_folder(folder)
     for method, scores_per_method in scores.items():
-        method_folder = folder + '/' + method
+        method_folder = folder + '/' + method + "_" + str(run_id)
         check_folder(method_folder)
         plot_score_per_model_per_nr_features_selected(method_folder, scores_per_method, method)
 
-def plot_average_per_method(app, folder, run_id):
-    folder = folder +'/plots/average'
+def plot_average_per_method(app, folder, run_id=-1):
+    folder = folder +'/plots/average/run_' + str(run_id)
     check_folder(folder)
     scores_per_method = get_scores_per_method(app, run_id)
     for method, method_scores in scores_per_method.items():

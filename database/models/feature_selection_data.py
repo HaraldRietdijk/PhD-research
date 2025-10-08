@@ -19,6 +19,7 @@ class METHOD_RESULTS(DBActivityModel):
     run_id = Column(Integer, ForeignKey(HFT_RUN_T.run_id), nullable=False)
     model = Column(VARCHAR(10), nullable=False)
     nr_features = Column(Integer, nullable=False)
+    threshold = Column(Float)
     accuracy = Column(Float)
     f1_score = Column(Float)
     precision = Column(Float)

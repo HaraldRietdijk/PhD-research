@@ -1,5 +1,5 @@
 import pandas as pd
-from sklearn.metrics import f1_score, confusion_matrix, accuracy_score
+from sklearn.metrics import f1_score, confusion_matrix, accuracy_score, precision_score, recall_score
 from sklearn.feature_selection import SelectKBest, chi2, f_classif  
 from sklearn.model_selection import GridSearchCV
 from steps.step_generic_code.general_variables.general_variables_all_shap import FITTING_PARAMETERS, CLASSIFIERS
@@ -11,17 +11,10 @@ def init_scores():
     return scores
 
 def append_scores(scores, Y, Y_pred, estimator, features):
-    df_confusion_matrix = pd.DataFrame(confusion_matrix(Y, Y_pred))
-    TN = df_confusion_matrix.iloc[0,0]
-    FP = df_confusion_matrix.iloc[0,1]
-    FN = df_confusion_matrix.iloc[1,0]
-    TP = df_confusion_matrix.iloc[1,1]
-    F1 = f1_score(Y,Y_pred, average='macro')
-    ACC = accuracy_score(Y, Y_pred)
-    scores['accuracy'].append(ACC)
-    scores['f1-score'].append(F1)
-    scores['precision'].append(TP / (TP + FP))
-    scores['recall'].append(TP / (TP + FN))
+    scores['accuracy'].append(accuracy_score(Y, Y_pred))
+    scores['f1-score'].append(f1_score(Y,Y_pred, average='macro'))
+    scores['precision'].append(precision_score(Y, Y_pred, average='macro'))
+    scores['recall'].append(recall_score(Y, Y_pred, average='macro'))
     scores['features'].append(list(features))
     if hasattr(estimator, 'coef_'):
         coefficients = list(estimator.coef_[0])

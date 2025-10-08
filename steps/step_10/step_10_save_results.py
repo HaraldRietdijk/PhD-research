@@ -31,7 +31,7 @@ def get_method_id(app, method):
         app.session.commit()
     return selection_method.id
 
-def save_method_results(app, scores, run_id):
+def save_filter_method_results(app, scores, run_id):
     for method, scores_per_method in scores.items():
         method_id = get_method_id(app, method)
         for model, score_per_model in scores_per_method.items():
