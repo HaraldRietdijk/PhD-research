@@ -1,10 +1,8 @@
 import pandas as pd
-from sklearn.base import accuracy_score
+from sklearn.metrics import f1_score, confusion_matrix, accuracy_score
 from sklearn.feature_selection import SelectKBest, chi2, f_classif  
 from sklearn.model_selection import GridSearchCV
-from sklearn.metrics import classification_report, confusion_matrix, f1_score
-from sklearn.pipeline import make_pipeline
-from steps.step_generic_code.general_variables.general_variables_all_shap import FITTING_PARAMETERS, CLASSIFIERS, ALGORITHM_PARAMETERS
+from steps.step_generic_code.general_variables.general_variables_all_shap import FITTING_PARAMETERS, CLASSIFIERS
 
 def init_scores():
     scores = {}
