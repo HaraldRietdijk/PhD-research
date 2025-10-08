@@ -66,3 +66,4 @@ Thumbs.db
 # Virtual environment
 venv
 .venv
+newDF_train.csv
