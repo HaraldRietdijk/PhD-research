@@ -23,7 +23,7 @@ def append_scores(scores, Y, Y_pred, estimator, features):
     scores['coefficients'].append(coefficients)
     return scores
 
-def get_scores_for_method(method, dataframes, features):
+def get_scores_for_filter_method(method, dataframes, features):
     scores = init_scores()
     for k in range(1,dataframes['X_train'].shape[1]):
         select_method = SelectKBest(method,k=k)
@@ -43,7 +43,7 @@ def get_filter_methods_scores(dataframes, features):
     # do anova and chi2 selecting all features, and then select based on coef.
     filter_method_scores = {}
     print('Getting scores for anova.')
-    filter_method_scores['anova'] = get_scores_for_method(f_classif, dataframes, features)
+    filter_method_scores['anova'] = get_scores_for_filter_method(f_classif, dataframes, features)
     print('Getting scores for chi2.')
-    filter_method_scores['chi2'] = get_scores_for_method(chi2, dataframes, features)
+    filter_method_scores['chi2'] = get_scores_for_filter_method(chi2, dataframes, features)
     return filter_method_scores
