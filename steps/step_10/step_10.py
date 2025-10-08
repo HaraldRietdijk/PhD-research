@@ -12,6 +12,7 @@ def do_step_10(app):
     folder = base_folder
     # Logging and run administration
     start_logging(base_folder)
+    # run_id=398 # use for reprinting specific run
     run_id = get_run_id(app,"Feature Selection", 'test', 10, 'NS')
     # Get dataframe and fill Nan values with median values
     dataframes = get_dataframe(app, num_of_classes)

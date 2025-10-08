@@ -1,7 +1,8 @@
 import pandas as pd
+from sklearn.base import accuracy_score
 from sklearn.feature_selection import SelectKBest, chi2, f_classif  
 from sklearn.model_selection import GridSearchCV
-from sklearn.metrics import classification_report
+from sklearn.metrics import classification_report, confusion_matrix, f1_score
 from sklearn.pipeline import make_pipeline
 from steps.step_generic_code.general_variables.general_variables_all_shap import FITTING_PARAMETERS, CLASSIFIERS, ALGORITHM_PARAMETERS
 
@@ -11,11 +12,18 @@ def init_scores():
         scores[name]={'accuracy' : [], 'f1-score' : [], 'precision' : [], 'recall' : [], 'features' : [], 'coefficients' : []}
     return scores
 
-def append_scores(scores, report, estimator, features):
-    scores['accuracy'].append(report['accuracy'])
-    scores['f1-score'].append(report['weighted avg']['f1-score'])
-    scores['precision'].append(report['weighted avg']['precision'])
-    scores['recall'].append(report['weighted avg']['recall'])
+def append_scores(scores, Y, Y_pred, estimator, features):
+    df_confusion_matrix = pd.DataFrame(confusion_matrix(Y, Y_pred))
+    TN = df_confusion_matrix.iloc[0,0]
+    FP = df_confusion_matrix.iloc[0,1]
+    FN = df_confusion_matrix.iloc[1,0]
+    TP = df_confusion_matrix.iloc[1,1]
+    F1 = f1_score(Y,Y_pred, average='macro')
+    ACC = accuracy_score(Y, Y_pred)
+    scores['accuracy'].append(ACC)
+    scores['f1-score'].append(F1)
+    scores['precision'].append(TP / (TP + FP))
+    scores['recall'].append(TP / (TP + FN))
     scores['features'].append(list(features))
     if hasattr(estimator, 'coef_'):
         coefficients = list(estimator.coef_[0])
@@ -37,8 +45,7 @@ def get_scores_for_method(method, dataframes, features):
             model = GridSearchCV(classifier, parameters, cv=2).fit(X_train, dataframes['Y_class_train'])
             estimator = model.best_estimator_
             y_pred = estimator.predict(X_test)
-            report = classification_report(dataframes['Y_class_test'], y_pred,output_dict=True)
-            scores[name] = append_scores(scores[name], report, estimator, method_features)
+            scores[name] = append_scores(scores[name], dataframes['Y_class_test'], y_pred, estimator, method_features)
     return scores
 
 def get_filter_methods_scores(dataframes, features):

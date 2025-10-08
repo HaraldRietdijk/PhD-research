@@ -38,4 +38,3 @@ def save_method_results(app, scores, run_id):
             for idx, accuracy in enumerate(score_per_model['accuracy']):
                 method_results_id = store_model_result(app, method_id, run_id, accuracy, model, idx, score_per_model)
                 store_features_for_result(app, score_per_model['features'][idx], score_per_model['coefficients'][idx] , method_results_id)
-    return

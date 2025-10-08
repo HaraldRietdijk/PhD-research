@@ -19,6 +19,7 @@ def plot_scoring(scores, method, folder, model = None):
             lines = ax1.plot(x, metric[0], color=metric[1], label=label)
         else:
             lines = lines + ax1.plot(x, metric[0], color=metric[1], label=label)
+    lines= lines + ax1.plot(x, scores['accuracy'][0], color=scores['accuracy'][1], label='extra')
     ax1.legend(lines, [line.get_label() for line in lines], loc='lower right')
     title = 'Metrics using ' + method
     name = folder + '/' + method + '.png'
@@ -34,15 +35,6 @@ def plot_score_per_model_per_nr_features_selected(folder, scores, method):
         scoring['accuracy']  = (model_scores['accuracy'], 'tab:red')
         scoring['f1-score']  = (model_scores['f1-score'], 'tab:blue')
         plot_scoring(scoring, method, folder, model)
-
-def plot_results_per_method(folder, scores):
-    print('Step 10: plotting filter methods results')
-    folder = folder + '/plots'
-    check_folder(folder)
-    for method, scores_per_method in scores.items():
-        method_folder = folder + '/' + method
-        check_folder(method_folder)
-        plot_score_per_model_per_nr_features_selected(method_folder, scores_per_method, method)
 
 def get_scores_per_method(app, run_id):
     scores_per_method = {}
@@ -62,6 +54,15 @@ def get_scores_per_method(app, run_id):
         scores_per_method[row[0]]['precision'][0].append(row[4])
         scores_per_method[row[0]]['recall'][0].append(row[5])
     return scores_per_method
+
+def plot_results_per_method(folder, scores):
+    print('Step 10: plotting filter methods results')
+    folder = folder + '/plots'
+    check_folder(folder)
+    for method, scores_per_method in scores.items():
+        method_folder = folder + '/' + method
+        check_folder(method_folder)
+        plot_score_per_model_per_nr_features_selected(method_folder, scores_per_method, method)
 
 def plot_average_per_method(app, folder, run_id):
     folder = folder +'/plots/average'
