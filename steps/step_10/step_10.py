@@ -171,19 +171,19 @@ def do_step_10(app):
 
         model_type = type(model).__name__
 
-        # Skip non-tree-based models
-        if not is_tree_model(model):
-            print(f"[SKIP] {model_name} ({model_type}) no-tree-based → require masker/callable. Skip.")
-            continue
-        if isinstance(model, AdaBoostClassifier):
-            print(f"[SKIP] {model_name} (AdaBoost) → TypeError. Skip.")
-            continue
-        if isinstance(model, RandomForestClassifier):
-            print(f"[SKIP] {model_name} (RandomForest) → TypeError. Skip.")
-            continue
-        if isinstance(model, DecisionTreeClassifier):
-            print(f"[SKIP] {model_name} (DecisionTree) → TypeError. Skip.")
-            continue
+        # # Skip non-tree-based models
+        # if not is_tree_model(model):
+        #     print(f"[SKIP] {model_name} ({model_type}) no-tree-based → require masker/callable. Skip.")
+        #     continue
+        # if isinstance(model, AdaBoostClassifier):
+        #     print(f"[SKIP] {model_name} (AdaBoost) → TypeError. Skip.")
+        #     continue
+        # if isinstance(model, RandomForestClassifier):
+        #     print(f"[SKIP] {model_name} (RandomForest) → TypeError. Skip.")
+        #     continue
+        # if isinstance(model, DecisionTreeClassifier):
+        #     print(f"[SKIP] {model_name} (DecisionTree) → TypeError. Skip.")
+        #     continue
 
         print(f"[SHAP-SELECT] Execute su {model_name} ({model_type})")
 
@@ -218,6 +218,7 @@ def do_step_10(app):
             cand = significance_df[significance_df["t-value"] > 0].sort_values("t-value", ascending=False)
             selected = cand["feature name"].head(top_k).tolist()
             print(f"[WARN] No feature selected with p<{0.05}. Fallback to top-{top_k} by t-value: {selected}")
+            continue
 
         # exclusion of not chosen features
         Xtr_sel = dataframes['X_train'][selected].copy()
