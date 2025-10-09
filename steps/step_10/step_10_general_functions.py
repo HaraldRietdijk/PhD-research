@@ -1,4 +1,5 @@
 from database.models.feature_selection_data import SELECTION_METHOD, METHOD_RESULTS, METHOD_RESULTS_FEATURES
+from steps.step_10.step_10_plot import plot_average_per_method, plot_results_per_method
 
 def store_model_result(app, method_id, run_id, model, idx, score_per_model, thresholds=None):
     nr_features = len(score_per_model['features'][idx])
@@ -46,3 +47,8 @@ def save_method_results(app, scores, run_id, thresholds = None):
                                                        idx, score_per_model, thresholds)
                 store_features_for_result(app, score_per_model['features'][idx], 
                                           score_per_model['coefficients'][idx] , method_results_id)
+
+def plot_and_save_results(app, folder, lasso_scores, run_id, thresholds=None):
+    plot_results_per_method(folder, lasso_scores, run_id, thresholds=thresholds)
+    save_method_results(app, lasso_scores, run_id, thresholds=thresholds)
+    plot_average_per_method(app, folder, run_id, thresholds=thresholds)

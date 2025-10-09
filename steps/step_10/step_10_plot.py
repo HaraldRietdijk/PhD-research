@@ -3,8 +3,9 @@ from sqlalchemy.sql import func, or_
 import matplotlib.pyplot as plt
 import numpy as np
 
-from database.models.feature_selection_data import SELECTION_METHOD, METHOD_RESULTS, METHOD_RESULTS_FEATURES
+from database.models.feature_selection_data import SELECTION_METHOD, METHOD_RESULTS
 from steps.step_generic_code.general_functions import check_folder
+from steps.step_generic_code.general_variables.general_variables_all_shap import LASSO_THRESHOLDS
 
 def plot_scoring(scores, method, folder, model = None, thresholds=None):
     plt.rcParams["font.family"] = "serif"
@@ -74,5 +75,5 @@ def plot_average_per_method(app, folder, run_id=-1, thresholds = None):
     for method, method_scores in scores_per_method.items():
         thresholds = None
         if (run_id==-1) and (method=='LASSO'):
-            thresholds = [0.005, 0.01, 0.05, 0.1, 0.15, 0.2, 0.25] 
+            thresholds = LASSO_THRESHOLDS 
         plot_scoring(method_scores, method, folder, thresholds=thresholds)

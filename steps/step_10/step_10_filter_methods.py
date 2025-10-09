@@ -1,9 +1,7 @@
-import pandas as pd
-from sklearn.metrics import f1_score, confusion_matrix, accuracy_score, precision_score, recall_score
+from sklearn.metrics import f1_score, accuracy_score, precision_score, recall_score
 from sklearn.feature_selection import SelectKBest, chi2, f_classif  
 from sklearn.model_selection import GridSearchCV
-from steps.step_10.step_10_plot import plot_average_per_method, plot_results_per_method
-from steps.step_10.step_10_save_results import save_method_results
+from steps.step_10.step_10_general_functions import plot_and_save_results
 from steps.step_generic_code.general_functions import complete_run, get_run_id
 from steps.step_generic_code.general_variables.general_variables_all_shap import FITTING_PARAMETERS, CLASSIFIERS
 
@@ -43,7 +41,6 @@ def get_scores_for_filter_method(method, dataframes, features):
     return scores
 
 def get_filter_methods_scores(dataframes, features):
-    # do anova and chi2 selecting all features, and then select based on coef.
     filter_method_scores = {}
     print('Getting scores for anova.')
     filter_method_scores['anova'] = get_scores_for_filter_method(f_classif, dataframes, features)
@@ -52,13 +49,10 @@ def get_filter_methods_scores(dataframes, features):
     return filter_method_scores
 
 def do_filter_methods(app, dataframes, features, folder):
-    # run_id=398 # use for reprinting specific run
-    for i in range(5):
+    for i in range(30):
         print('Starting filter run: ',str(i+1))
         run_id = get_run_id(app,"Feature Selection filter", 'test', 10, 'NS')
         filter_methods_scores = get_filter_methods_scores(dataframes, features)
-        plot_results_per_method(folder, filter_methods_scores, run_id)
-        save_method_results(app, filter_methods_scores, run_id)
-        plot_average_per_method(app, folder, run_id)
+        plot_and_save_results(app, folder, filter_methods_scores, run_id)
         complete_run(app, run_id)
 
