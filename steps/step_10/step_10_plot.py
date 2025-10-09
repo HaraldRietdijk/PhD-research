@@ -9,12 +9,11 @@ from steps.step_generic_code.general_functions import check_folder
 def plot_scoring(scores, method, folder, model = None, thresholds=None):
     plt.rcParams["font.family"] = "serif"
     fig, ax1 = plt.subplots()
+    x = np.arange(1,len(list(scores.values())[0][0])+1)
     if thresholds:
-        x = thresholds
-        ax1.set_xticks(thresholds)
+        ax1.set_xticks(range(1,len(thresholds)+1), thresholds)
         ax1.set_xlabel("Threshold used")
     else:
-        x = np.arange(1,len(list(scores.values())[0][0])+1)
         ax1.set_xticks(np.arange(1, len(x), step = 4))
         ax1.set_xlabel("Nr. of Features used")
     ax1.set_ylabel('Mertic score', fontsize='large', labelpad=30)
@@ -73,4 +72,7 @@ def plot_average_per_method(app, folder, run_id=-1, thresholds = None):
     check_folder(folder)
     scores_per_method = get_scores_per_method(app, run_id)
     for method, method_scores in scores_per_method.items():
+        thresholds = None
+        if (run_id==-1) and (method=='LASSO'):
+            thresholds = [0.005, 0.01, 0.05, 0.1, 0.15, 0.2, 0.25] 
         plot_scoring(method_scores, method, folder, thresholds=thresholds)

@@ -108,3 +108,5 @@ CLASSIFIERS = [('LDA',LinearDiscriminantAnalysis(),True,28),
                ]
 
 ALGORITHM_PARAMETERS = { algorithm: [parameter for parameter in values[0]] for algorithm, values in FITTING_PARAMETERS.items()}
+
+LASSO_THRESHOLDS = [0.005, 0.01, 0.05, 0.1, 0.15, 0.25]

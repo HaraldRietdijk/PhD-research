@@ -1,11 +1,13 @@
 from sklearn.linear_model import Lasso
 from sklearn.model_selection import GridSearchCV
 from sklearn.feature_selection import SelectFromModel
-import numpy as np
 import pandas as pd
 
 from steps.step_10.step_10_filter_methods import append_scores, init_scores
-from steps.step_generic_code.general_variables.general_variables_all_shap import CLASSIFIERS, FITTING_PARAMETERS
+from steps.step_10.step_10_plot import plot_average_per_method, plot_results_per_method
+from steps.step_10.step_10_save_results import save_method_results
+from steps.step_generic_code.general_functions import complete_run, get_run_id
+from steps.step_generic_code.general_variables.general_variables_all_shap import CLASSIFIERS, FITTING_PARAMETERS, LASSO_THRESHOLDS
 
 def get_lasso_fitting(dataframes):
     # params = {"alpha":[0.00001, 1, 10, 500]}
@@ -41,3 +43,17 @@ def get_lasso_scores(dataframes, features, thresholds):
             y_pred = estimator.predict(X_test)
             scores[name] = append_scores(scores[name], dataframes['Y_class_test'], y_pred, estimator, lasso_features)
     return scores
+
+def do_lasso(app, dataframes, features, folder):
+    lasso_scores = {}
+    for i in range(5):
+        print('Starting LASSO run: ',str(i+1))
+        run_id = get_run_id(app,"Feature Selection LASSO", 'test', 10, 'NS')
+        thresholds = LASSO_THRESHOLDS
+        lasso_scores['LASSO'] = get_lasso_scores(dataframes, features, thresholds)
+        plot_results_per_method(folder, lasso_scores, run_id, thresholds=thresholds)
+        save_method_results(app, lasso_scores, run_id, thresholds=thresholds)
+        plot_average_per_method(app, folder, run_id, thresholds=thresholds)
+        complete_run(app, run_id)
+
+
