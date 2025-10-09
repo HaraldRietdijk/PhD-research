@@ -22,7 +22,7 @@ def do_lasso(app, dataframes, features, folder):
     for i in range(5):
         print('Starting LASSO run: ',str(i+1))
         run_id = get_run_id(app,"Feature Selection LASSO", 'test', 10, 'NS')
-        thresholds = [0.05, 0.1, 0.15, 0.2]
+        thresholds = [0.005, 0.01, 0.05, 0.1, 0.15, 0.2]
         lasso_scores['LASSO'] = get_lasso_scores(dataframes, features, thresholds)
         plot_results_per_method(folder, lasso_scores, run_id, thresholds=thresholds)
         save_method_results(app, lasso_scores, run_id, thresholds=thresholds)
@@ -40,5 +40,5 @@ def do_step_10(app):
     dataframes = get_dataframe(app, num_of_classes)
     # Get list of features
     features = dataframes['X'].columns.tolist()
-    do_filter_methods(app, dataframes, features, folder)
+    # do_filter_methods(app, dataframes, features, folder)
     do_lasso(app, dataframes, features, folder)
