@@ -41,7 +41,7 @@ def save_method_results(app, scores, run_id, thresholds = None):
     for method, scores_per_method in scores.items():
         method_id = get_method_id(app, method)
         for model, score_per_model in scores_per_method.items():
-            for idx in len(score_per_model['accuracy']):
+            for idx in range(len(score_per_model['accuracy'])):
                 method_results_id = store_model_result(app, method_id, run_id, model, 
                                                        idx, score_per_model, thresholds)
                 store_features_for_result(app, score_per_model['features'][idx], 
