@@ -1,7 +1,7 @@
 from sklearn.metrics import f1_score, accuracy_score, precision_score, recall_score
 from sklearn.feature_selection import SelectKBest, chi2, f_classif  
 from sklearn.model_selection import GridSearchCV
-from steps.step_10.step_10_general_functions import plot_and_save_results
+from steps.step_10.step_10_general_functions import save_method_results
 from steps.step_generic_code.general_functions import complete_run, get_run_id
 from steps.step_generic_code.general_variables.general_variables_all_shap import FITTING_PARAMETERS, CLASSIFIERS
 
@@ -48,11 +48,11 @@ def get_filter_methods_scores(dataframes, features):
     filter_method_scores['chi2'] = get_scores_for_filter_method(chi2, dataframes, features)
     return filter_method_scores
 
-def do_filter_methods(app, dataframes, features, folder):
+def do_filter_methods(app, dataframes, features):
     for i in range(30):
         print('Starting filter run: ',str(i+1))
         run_id = get_run_id(app,"Feature Selection filter", 'test', 10, 'NS')
         filter_methods_scores = get_filter_methods_scores(dataframes, features)
-        plot_and_save_results(app, folder, filter_methods_scores, run_id)
+        save_method_results(app, filter_methods_scores, run_id)
         complete_run(app, run_id)
 

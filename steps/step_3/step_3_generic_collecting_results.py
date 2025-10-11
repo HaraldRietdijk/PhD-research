@@ -13,7 +13,7 @@ def fit_model (treatment_id, use_algorithm_name, use_algorithm, X_train, Y_train
     logging.info(log_text)
     start = time.time()
     if use_algorithm_name in ['RF','DT']:
-        fitted_model = GridSearchCV(use_algorithm, parameters,error_score=0.0, cv=5).fit(X_train, Y_train)
+        fitted_model = GridSearchCV(use_algorithm, parameters, error_score=0.0, cv=5).fit(X_train, Y_train)
     elif use_algorithm_name in ['OCS','SGDOC']:
         fitted_model = GridSearchCV(use_algorithm, parameters, scoring='accuracy', cv=5).fit(X_train, Y_train)
     else:

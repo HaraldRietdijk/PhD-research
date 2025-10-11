@@ -4,7 +4,7 @@ from sklearn.feature_selection import SelectFromModel
 import pandas as pd
 
 from steps.step_10.step_10_filter_methods import append_scores, init_scores
-from steps.step_10.step_10_general_functions import plot_and_save_results
+from steps.step_10.step_10_general_functions import save_method_results
 from steps.step_generic_code.general_functions import complete_run, get_run_id
 from steps.step_generic_code.general_variables.general_variables_all_shap import CLASSIFIERS, FITTING_PARAMETERS, LASSO_THRESHOLDS
 
@@ -42,13 +42,13 @@ def get_lasso_scores(dataframes, features, thresholds):
             scores[name] = append_scores(scores[name], dataframes['Y_class_test'], y_pred, estimator, lasso_features)
     return scores
 
-def do_lasso(app, dataframes, features, folder):
+def do_lasso(app, dataframes, features):
     lasso_scores = {}
     for i in range(30):
         print('Starting LASSO run: ',str(i+1))
         run_id = get_run_id(app,"Feature Selection LASSO", 'test', 10, 'NS')
         thresholds = LASSO_THRESHOLDS
         lasso_scores['LASSO'] = get_lasso_scores(dataframes, features, thresholds)
-        plot_and_save_results(app, folder, lasso_scores, run_id, thresholds=thresholds)
+        save_method_results(app, lasso_scores, run_id, thresholds=thresholds)
         complete_run(app, run_id)
         

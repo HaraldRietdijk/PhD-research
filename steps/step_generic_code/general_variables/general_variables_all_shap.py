@@ -110,3 +110,8 @@ CLASSIFIERS = [('LDA',LinearDiscriminantAnalysis(),True,28),
 ALGORITHM_PARAMETERS = { algorithm: [parameter for parameter in values[0]] for algorithm, values in FITTING_PARAMETERS.items()}
 
 LASSO_THRESHOLDS = [0.005, 0.01, 0.05, 0.1, 0.15, 0.25]
+
+SHAP_THRESHOLDS = [0.01, 0.02, 0.03, 0.04, 0.05, 0.07, 0.10, 0.15]
+
+# SEEDS = [10, 270, 333, 41, 500, 999, 123, 456, 789, 888]
+SEEDS = [123, 456, 789, 888]

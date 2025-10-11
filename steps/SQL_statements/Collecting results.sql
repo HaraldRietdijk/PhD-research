@@ -111,3 +111,23 @@ where cs.hft_run_id in
 		where run_type = 'definite' and run_step=7 and run_completed=1 and data_set = 'vfc')
 group by fgm.hft_feature_group, cfg.algorithm, mo.algorithm
 order by classifier desc, spread_accuracy, clustering, fgm.hft_feature_group
+
+-- Getting the Feature selection runs with the highest accuracy and from those the highest f1-score.
+select mrf.* 
+from fs_method_results mrf
+join (select mr.method_id as method_id, mr.model as model, max(mr.accuracy) as acc, max(mr.f1_score) as f1, min(mr.nr_features) as feat
+	from fs_method_results mr
+	left join fs_method_results mrm on mr.method_id = mrm.method_id and mr.model = mrm.model 
+			and  (mr.accuracy, mr.f1_score,-mr.nr_features) < (mrm.accuracy, mrm.f1_score,-mr.nr_features)
+	where mrm.accuracy is null
+	group by mr.method_id, mr.model) as mrmax
+    on mrf.method_id = mrmax.method_id and mrf.model = mrmax.model 
+		and mrf.accuracy = mrmax.acc and mrf.f1_score = mrmax.f1
+		and mrf.nr_features = mrmax.feat
+;
+
+-- Getting average accuracies per model per method
+select mr.method_id, mr.model, mr.nr_features, mr.threshold, avg(mr.accuracy) as acc, avg(mr.f1_score) as f1, avg(mr.precision), avg(mr.recall)
+from fs_method_results mr
+group by mr.method_id, mr.model, mr.nr_features, mr.threshold
+order by mr.method_id, mr.model, acc desc, f1 desc;
