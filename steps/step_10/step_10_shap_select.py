@@ -1,12 +1,10 @@
 import random
-import warnings
 import numpy as np
 
 from sklearn.model_selection import GridSearchCV
 from shap_select import shap_select
 
-from steps.step_10.step_10_filter_methods import append_scores, init_scores
-from steps.step_10.step_10_general_functions import save_method_results
+from steps.step_10.step_10_general_functions import append_scores, init_scores, save_method_results
 from steps.step_generic_code.general_functions import complete_run, get_run_id
 from steps.step_generic_code.general_variables.general_variables_all_shap import CLASSIFIERS, FITTING_PARAMETERS, SHAP_THRESHOLDS, SEEDS
 
@@ -24,7 +22,8 @@ def get_shap_features(estimator, dataframes, features, threshold):
     selected = significance_df.loc[significance_df["selected"] == 1, "feature name"].tolist()
     if len(selected) == 0:
         top_k = 2
-        cand = significance_df[significance_df["t-value"] > 0].sort_values("t-value", ascending=False)
+        # cand = significance_df[significance_df["t-value"] > 0].sort_values("t-value", ascending=False)
+        cand = significance_df.sort_values("t-value", ascending=False)
         selected = cand["feature name"].head(top_k).tolist()
     X_train = dataframes['X_train'][selected]
     X_test = dataframes['X_test'][selected]
@@ -57,7 +56,7 @@ def get_shap_scores(dataframes, features, thresholds):
 
 def do_shap_select(app, dataframes, features):
     shap_scores = {}
-    for i in range(3):
+    for i in range(2):
         for seed in SEEDS:
             np.random.seed(seed)
             random.seed(seed)

@@ -3,8 +3,7 @@ from sklearn.model_selection import GridSearchCV
 from sklearn.feature_selection import SelectFromModel
 import pandas as pd
 
-from steps.step_10.step_10_filter_methods import append_scores, init_scores
-from steps.step_10.step_10_general_functions import save_method_results
+from steps.step_10.step_10_general_functions import append_scores, init_scores, save_method_results
 from steps.step_generic_code.general_functions import complete_run, get_run_id
 from steps.step_generic_code.general_variables.general_variables_all_shap import CLASSIFIERS, FITTING_PARAMETERS, LASSO_THRESHOLDS
 

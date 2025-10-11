@@ -1,28 +1,8 @@
-from sklearn.metrics import f1_score, accuracy_score, precision_score, recall_score
 from sklearn.feature_selection import SelectKBest, chi2, f_classif  
 from sklearn.model_selection import GridSearchCV
-from steps.step_10.step_10_general_functions import save_method_results
+from steps.step_10.step_10_general_functions import append_scores, init_scores, save_method_results
 from steps.step_generic_code.general_functions import complete_run, get_run_id
 from steps.step_generic_code.general_variables.general_variables_all_shap import FITTING_PARAMETERS, CLASSIFIERS
-
-def init_scores():
-    scores = {}
-    for name, _, _ , _ in CLASSIFIERS:
-        scores[name]={'accuracy' : [], 'f1-score' : [], 'precision' : [], 'recall' : [], 'features' : [], 'coefficients' : []}
-    return scores
-
-def append_scores(scores, Y, Y_pred, estimator, features):
-    scores['accuracy'].append(accuracy_score(Y, Y_pred))
-    scores['f1-score'].append(f1_score(Y,Y_pred, average='macro'))
-    scores['precision'].append(precision_score(Y, Y_pred, average='macro'))
-    scores['recall'].append(recall_score(Y, Y_pred, average='macro'))
-    scores['features'].append(list(features))
-    if hasattr(estimator, 'coef_'):
-        coefficients = list(estimator.coef_[0])
-    else:
-        coefficients = list(estimator.feature_importances_)
-    scores['coefficients'].append(coefficients)
-    return scores
 
 def get_scores_for_filter_method(method, dataframes, features):
     scores = init_scores()

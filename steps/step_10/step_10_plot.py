@@ -5,7 +5,6 @@ import numpy as np
 
 from database.models.feature_selection_data import SELECTION_METHOD, METHOD_RESULTS
 from steps.step_generic_code.general_functions import check_folder
-from steps.step_generic_code.general_variables.general_variables_all_shap import LASSO_THRESHOLDS
 
 COLORS = ['tab:red','tab:blue','tab:orange','tab:green']
 
@@ -47,13 +46,6 @@ def plot_scoring(scores, folder, title, name):
     name = folder + '/' + name + '.png'
     plt.title(title)
     plt.savefig(name, format='png')
-
-# def plot_score_per_model_per_nr_features_selected(folder, scores, method, thresholds=None):
-#     for model, model_scores in scores.items():
-#         scoring = {}
-#         scoring['accuracy']  = (model_scores['accuracy'], COLORS[0])
-#         scoring['f1-score']  = (model_scores['f1-score'], COLORS[1])
-#         plot_scoring(scoring, method, folder, model, thresholds=thresholds)
 
 def proces_query_results(scores_per_method, average_accuracy):
     x_method = {}

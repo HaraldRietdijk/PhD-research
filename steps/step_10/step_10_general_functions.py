@@ -1,12 +1,26 @@
-import logging
-import numpy as np
-
-from sklearn.model_selection import GridSearchCV
-from sklearn.metrics import accuracy_score, f1_score, roc_auc_score
+from sklearn.metrics import accuracy_score, f1_score, precision_score, recall_score
 
 from database.models.feature_selection_data import SELECTION_METHOD, METHOD_RESULTS, METHOD_RESULTS_FEATURES
-from steps.step_generic_code.general_variables.general_variables_all_shap import FITTING_PARAMETERS, CLASSIFIERS, ALGORITHM_PARAMETERS
+from steps.step_generic_code.general_variables.general_variables_all_shap import FITTING_PARAMETERS, CLASSIFIERS
       
+def init_scores():
+    scores = {}
+    for name, _, _ , _ in CLASSIFIERS:
+        scores[name]={'accuracy' : [], 'f1-score' : [], 'precision' : [], 'recall' : [], 'features' : [], 'coefficients' : []}
+    return scores
+
+def append_scores(scores, Y, Y_pred, estimator, features):
+    scores['accuracy'].append(accuracy_score(Y, Y_pred))
+    scores['f1-score'].append(f1_score(Y,Y_pred, average='macro'))
+    scores['precision'].append(precision_score(Y, Y_pred, average='macro'))
+    scores['recall'].append(recall_score(Y, Y_pred, average='macro'))
+    scores['features'].append(list(features))
+    if hasattr(estimator, 'coef_'):
+        coefficients = list(estimator.coef_[0])
+    else:
+        coefficients = list(estimator.feature_importances_)
+    scores['coefficients'].append(coefficients)
+    return scores
 
 def store_model_result(app, method_id, run_id, model, idx, score_per_model, thresholds=None):
     nr_features = len(score_per_model['features'][idx])
@@ -54,46 +68,3 @@ def save_method_results(app, scores, run_id, thresholds = None):
                                                        idx, score_per_model, thresholds)
                 store_features_for_result(app, score_per_model['features'][idx], 
                                           score_per_model['coefficients'][idx] , method_results_id)
-
-def fit_models(X_train, Y_train):
-    print("Step 10 CS: Fitting models")
-    fitted_models = {}
-    for name, classifier, _, _ in CLASSIFIERS:
-        print("Model: ", name)
-        parameters=FITTING_PARAMETERS[name]
-        log_text="Model {m}".format(m=name)
-        logging.info(log_text)
-        if name in ['OCS','SGDOC']:
-            fitted_models[name] = GridSearchCV(classifier, parameters, scoring='accuracy', cv=2).fit(X_train, Y_train).best_estimator_
-        else:
-            newDF = X_train.copy()
-            newDF.replace(np.nan, 'error', inplace =True)
-            newDF.to_csv('newDF_train.csv', sep=',')
-            fitted_models[name] = GridSearchCV(classifier, parameters, cv=2).fit(X_train, Y_train).best_estimator_
-    return fitted_models
-
-def get_scores_for_prediction(fitted_models, X_set, Y_set):
-    print("Step 10 CS: geting scores")
-    models_scoring = {}
-    for name, fitted_model in fitted_models.items():
-        model_score = {}
-        Y_pred = fitted_model.predict(X_set)
-        model_score['accuracy_score'] = accuracy_score(Y_set,Y_pred)
-        model_score['f1_score_micro'] = f1_score(Y_set,Y_pred,average='micro')
-        model_score['f1_score_macro'] = f1_score(Y_set,Y_pred,average='macro')
-        if name not in ['PAC','PER','RIC','SGD','PAC1','PER1','RIC1','SGD1','SGDOC','NCC','LSVC','LSVC1']:
-            Y_pred_prob = fitted_model.predict_proba(X_set)
-            if len(Y_pred_prob[0])==2:
-                Y_pred_prob = Y_pred_prob[:,1]
-            model_score['roc_auc_score_micro'] = roc_auc_score(Y_set,Y_pred_prob,average='micro',multi_class='ovr')
-            model_score['roc_auc_score_macro'] = roc_auc_score(Y_set,Y_pred_prob,average='macro',multi_class='ovo')
-        models_scoring[name] = model_score
-    return models_scoring
-
-def classifier_selection(app, folder, dataframes, nr_of_classes):
-    fitted_models = fit_models(dataframes['X_train'], dataframes['Y_class_train'])
-    models_scoring = {}
-    models_scoring['Test'] = get_scores_for_prediction(fitted_models, dataframes['X_test'], dataframes['Y_class_test'])
-    models_scoring['Train'] = get_scores_for_prediction(fitted_models, dataframes['X_train'], dataframes['Y_class_train'])
-    # save_pickle_and_metrics(app, folder, fitted_models, models_scoring, nr_of_classes, ALGORITHM_PARAMETERS)
-    return fitted_models
