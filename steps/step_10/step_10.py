@@ -12,8 +12,8 @@ def do_step_10(app):
     start_logging(base_folder)
     dataframes = get_dataframe(app, num_of_classes)
     features = dataframes['X'].columns.tolist()
-    # do_filter_methods(app, dataframes, features)
-    # do_lasso(app, dataframes, features)
+    do_filter_methods(app, dataframes, features)
+    do_lasso(app, dataframes, features)
     do_shap_select(app, dataframes, features)
     plot_metrics_over_all_models_per_method(app, folder) # 4 graphs (4 methods) with each four lines, one line per metric, taking the average metric over all models
     plot_accuracy_for_all_methods_per_features(app,folder) # one graph with four lines, one line per method, average over all models
