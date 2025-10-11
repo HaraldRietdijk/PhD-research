@@ -1,7 +1,7 @@
 from sklearn.metrics import accuracy_score, f1_score, precision_score, recall_score
 
 from database.models.feature_selection_data import SELECTION_METHOD, METHOD_RESULTS, METHOD_RESULTS_FEATURES
-from steps.step_generic_code.general_variables.general_variables_all_shap import FITTING_PARAMETERS, CLASSIFIERS
+from steps.step_generic_code.general_variables.general_variables_all_shap import CLASSIFIERS
       
 def init_scores():
     scores = {}

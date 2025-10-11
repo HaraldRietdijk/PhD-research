@@ -34,7 +34,7 @@ def get_lasso_scores(dataframes, features, thresholds):
         X_train, X_test, lasso_features = get_lasso_features(dataframes, features, lasso_fitting, importance, threshold)
         for name, classifier, _, _ in CLASSIFIERS:
             print(threshold, name)
-            parameters=FITTING_PARAMETERS[name]
+            parameters = FITTING_PARAMETERS[name]
             model = GridSearchCV(classifier, parameters, cv=2).fit(X_train, dataframes['Y_class_train'])
             estimator = model.best_estimator_
             y_pred = estimator.predict(X_test)

@@ -13,7 +13,7 @@ def get_scores_for_filter_method(method, dataframes, features):
         X_test = dataframes['X_test'][method_features]
         for name, classifier, _, _ in CLASSIFIERS:
             print(k,name)
-            parameters=FITTING_PARAMETERS[name]
+            parameters = FITTING_PARAMETERS[name]
             model = GridSearchCV(classifier, parameters, cv=2).fit(X_train, dataframes['Y_class_train'])
             estimator = model.best_estimator_
             y_pred = estimator.predict(X_test)

@@ -30,7 +30,7 @@ def get_shap_features(estimator, dataframes, features, threshold):
     return X_train, X_test, selected
 
 def get_fitted_model(name, classifier, X, Y):
-    parameters=FITTING_PARAMETERS[name]
+    parameters = FITTING_PARAMETERS[name]
     fitted = False
     while (not fitted):
         try:
