@@ -10,7 +10,7 @@ def do_step_10(app):
     num_of_classes = 2 # Binary classification is all we are looking for.
     folder='results/fs_shap'
     start_logging(folder)
-    if len(sys.argv<5):
+    if len(sys.argv)<5:
         run_type = 'plot'
     else:
        run_type = sys.argv[4]
