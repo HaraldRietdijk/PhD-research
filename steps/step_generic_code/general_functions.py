@@ -27,8 +27,8 @@ def check_folder(folder):
         os.makedirs(folder) 
 
 def start_logging(folder='logging_folder'):
-    if len(sys.argv)==5:
-        folder = 'results/' + sys.argv[4]
+    if len(sys.argv)>=6:
+        folder = 'results/' + sys.argv[5]
     check_folder(folder) 
     logging_file=folder+"/logging.txt"
     logging.basicConfig(filename=logging_file,level=logging.ERROR)

@@ -205,8 +205,8 @@ def get_metrics(app, run_id):
 
 def do_clustering(app, df_characteristics, names, run_id, nr_features_start=2, nr_clusters='5'):
     type = 'vfc'
-    if len(sys.argv)>=6:
-        type = sys.argv[5]
+    if len(sys.argv)>=5:
+        type = sys.argv[4]
     df_used = df_characteristics
     if type=='vfc':
         df_used = df_characteristics.loc[df_characteristics['research_group'].isin([1,2])]

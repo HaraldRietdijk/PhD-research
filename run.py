@@ -23,10 +23,14 @@ if __name__ == "__main__":
               '       arg2: orig ns\n'
               '            Use orig to process the original data\n'
               '            Use ns to process the NijSmellinghe data\n'
-              '       arg3: (Optional) folder names\n'
-              '            Folder name for storing models, plots and logging\n'
-              '       arg4: (Optional) clustering type\n'
+              '       arg3: (Optional) clustering type\n'
               '            vfc, ns, full for clustering on parts of the dataset, default vfc\n'
+              '            or for step 10 (Optional): full, filter, lasso, shap, plot, default plot\n'
+              '            Use full to generate the data for all FS methods or select a method\n'          
+              '            Graphs are always reproduced\n'          
+              '            Use plot (default) to only reproduce the graphs\n'          
+              '       arg4: (Optional) folder names\n'
+              '            Folder name for storing models, plots and logging\n'
               '       arg5: (Optional) number of clusters\n'
               '            4, 7, 8, 9 , default 4\n')
 
