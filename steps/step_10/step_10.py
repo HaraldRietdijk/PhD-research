@@ -1,4 +1,5 @@
 import sys
+from steps.step_10.step_10_base_scoring import do_base_scoring
 from steps.step_generic_code.dataframe_knee_operations import get_dataframe
 from steps.step_generic_code.general_functions import start_logging
 from steps.step_10.step_10_filter_methods import do_filter_methods
@@ -21,6 +22,8 @@ def run_method_selection(app, run_type, run_all_methods):
     num_of_classes = 2 # Binary classification is all we are looking for.
     dataframes = get_dataframe(app, num_of_classes)
     features = dataframes['X'].columns.tolist()
+    if (run_type=="base") or run_all_methods: 
+        do_base_scoring(app, dataframes, features)
     if (run_type=="filter") or run_all_methods: 
         do_filter_methods(app, dataframes, features)
     if (run_type=="lasso") or run_all_methods: 

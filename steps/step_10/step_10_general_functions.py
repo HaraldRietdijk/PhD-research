@@ -23,7 +23,7 @@ def append_scores(scores, Y, Y_pred, estimator, features):
     scores['coefficients'].append(coefficients)
     return scores
 
-def get_scores_for_features(scores, name, classifier, dataframes, features):
+def append_scores_for_features(scores, name, classifier, dataframes, features):
     X_train = dataframes['X_train'][features]
     X_test = dataframes['X_test'][features]
     parameters = FITTING_PARAMETERS[name]

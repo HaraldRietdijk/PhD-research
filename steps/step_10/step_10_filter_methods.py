@@ -1,5 +1,5 @@
 from sklearn.feature_selection import SelectKBest
-from steps.step_10.step_10_general_functions import get_scores_for_features, init_scores, save_method_results
+from steps.step_10.step_10_general_functions import append_scores_for_features, init_scores, save_method_results
 from steps.step_generic_code.general_functions import complete_run, get_run_id
 from steps.step_generic_code.general_variables.general_variables_all_shap import FILTER_METHODS, CLASSIFIERS
 
@@ -19,7 +19,7 @@ def get_scores_for_filter_method(method_features_selection, dataframes, features
     for method_features in method_features_selection:
         for name, classifier, _, _ in CLASSIFIERS:
             print(len(method_features),name)
-            scores[name] = get_scores_for_features(scores, name, classifier, dataframes, method_features)
+            scores[name] = append_scores_for_features(scores, name, classifier, dataframes, method_features)
     return scores
 
 def do_filter_methods(app, dataframes, features):

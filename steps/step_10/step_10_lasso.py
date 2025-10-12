@@ -3,7 +3,7 @@ from sklearn.model_selection import GridSearchCV
 from sklearn.feature_selection import SelectFromModel
 import pandas as pd
 
-from steps.step_10.step_10_general_functions import get_scores_for_features, init_scores, save_method_results
+from steps.step_10.step_10_general_functions import append_scores_for_features, init_scores, save_method_results
 from steps.step_generic_code.general_functions import complete_run, get_run_id
 from steps.step_generic_code.general_variables.general_variables_all_shap import CLASSIFIERS, LASSO_THRESHOLDS
 
@@ -33,7 +33,7 @@ def get_lasso_scores(lasso_features_selection, dataframes, thresholds):
     for idx, lasso_features in enumerate(lasso_features_selection):
         for name, classifier, _, _ in CLASSIFIERS:
             print(thresholds[idx], name)
-            scores[name] = get_scores_for_features(scores, name, classifier, dataframes, lasso_features)
+            scores[name] = append_scores_for_features(scores, name, classifier, dataframes, lasso_features)
     return scores
 
 def do_lasso(app, dataframes, features):
