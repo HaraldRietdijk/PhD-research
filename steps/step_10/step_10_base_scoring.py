@@ -13,5 +13,5 @@ def do_base_scoring(app, dataframes, features):
             print(str(i), name)
             scores[name] = append_scores_for_features(scores, name, classifier, dataframes, features)
     base_scoring['base'] = scores
-    save_method_results(app, base_scoring, run_id, 'filter')
+    save_method_results(app, base_scoring, run_id, 'base')
     complete_run(app, run_id)
