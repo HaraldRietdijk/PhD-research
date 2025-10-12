@@ -1,7 +1,8 @@
 from sklearn.metrics import accuracy_score, f1_score, precision_score, recall_score
+from sklearn.model_selection import GridSearchCV
 
 from database.models.feature_selection_data import SELECTION_METHOD, METHOD_RESULTS, METHOD_RESULTS_FEATURES
-from steps.step_generic_code.general_variables.general_variables_all_shap import CLASSIFIERS
+from steps.step_generic_code.general_variables.general_variables_all_shap import CLASSIFIERS, FITTING_PARAMETERS
       
 def init_scores():
     scores = {}
@@ -21,6 +22,15 @@ def append_scores(scores, Y, Y_pred, estimator, features):
         coefficients = list(estimator.feature_importances_)
     scores['coefficients'].append(coefficients)
     return scores
+
+def get_scores_for_features(scores, name, classifier, dataframes, features):
+    X_train = dataframes['X_train'][features]
+    X_test = dataframes['X_test'][features]
+    parameters = FITTING_PARAMETERS[name]
+    model = GridSearchCV(classifier, parameters, cv=2).fit(X_train, dataframes['Y_class_train'])
+    estimator = model.best_estimator_
+    y_pred = estimator.predict(X_test)
+    return append_scores(scores[name], dataframes['Y_class_test'], y_pred, estimator, features)
 
 def store_model_result(app, method_id, run_id, model, idx, score_per_model, thresholds=None):
     nr_features = len(score_per_model['features'][idx])
@@ -51,17 +61,17 @@ def store_features_for_result(app, features, coefficients, method_results_id):
         app.session.add(features)
     app.session.commit()
 
-def get_method_id(app, method):
+def get_method_id(app, method, method_type):
     selection_method = app.session.query(SELECTION_METHOD).filter(SELECTION_METHOD.name==method).first()
     if not selection_method:
-        selection_method = SELECTION_METHOD(name=method, type='new type')
+        selection_method = SELECTION_METHOD(name=method, type=method_type)
         app.session.add(selection_method)
         app.session.commit()
     return selection_method.id
 
-def save_method_results(app, scores, run_id, thresholds = None):
+def save_method_results(app, scores, run_id, method_type,thresholds = None):
     for method, scores_per_method in scores.items():
-        method_id = get_method_id(app, method)
+        method_id = get_method_id(app, method, method_type)
         for model, score_per_model in scores_per_method.items():
             for idx in range(len(score_per_model['accuracy'])):
                 method_results_id = store_model_result(app, method_id, run_id, model, 

@@ -3,9 +3,9 @@ from sklearn.model_selection import GridSearchCV
 from sklearn.feature_selection import SelectFromModel
 import pandas as pd
 
-from steps.step_10.step_10_general_functions import append_scores, init_scores, save_method_results
+from steps.step_10.step_10_general_functions import get_scores_for_features, init_scores, save_method_results
 from steps.step_generic_code.general_functions import complete_run, get_run_id
-from steps.step_generic_code.general_variables.general_variables_all_shap import CLASSIFIERS, FITTING_PARAMETERS, LASSO_THRESHOLDS
+from steps.step_generic_code.general_variables.general_variables_all_shap import CLASSIFIERS, LASSO_THRESHOLDS
 
 def get_lasso_fitting(dataframes):
     params = {"alpha":[0.0001]}
@@ -19,35 +19,32 @@ def get_coefficient_threshold(importance, threshold):
     valid_coefficients = importance.loc[importance['normalized']>=threshold]
     return valid_coefficients['coefficient'].min()
 
-def get_lasso_features(dataframes, features, lasso_fitting, importance, threshold):
-    coefficient_threshold = get_coefficient_threshold(importance, threshold)
-    select_from_model = SelectFromModel(lasso_fitting, threshold=coefficient_threshold)
-    lasso_features = select_from_model.fit(dataframes['X'],dataframes['Y_class']).get_feature_names_out(features)
-    X_train = dataframes['X_train'][lasso_features]
-    X_test = dataframes['X_test'][lasso_features]
-    return X_train, X_test, lasso_features
-
-def get_lasso_scores(dataframes, features, thresholds):    
+def get_lasso_features(dataframes, features, thresholds):
     lasso_fitting, importance = get_lasso_fitting(dataframes)
-    scores = init_scores()
+    lasso_features = []
     for threshold in thresholds:
-        X_train, X_test, lasso_features = get_lasso_features(dataframes, features, lasso_fitting, importance, threshold)
+        coefficient_threshold = get_coefficient_threshold(importance, threshold)
+        select_from_model = SelectFromModel(lasso_fitting, threshold=coefficient_threshold)
+        lasso_features.append(select_from_model.fit(dataframes['X'],dataframes['Y_class']).get_feature_names_out(features))
+    return lasso_features
+
+def get_lasso_scores(lasso_features_selection, dataframes, thresholds):    
+    scores = init_scores()
+    for idx, lasso_features in enumerate(lasso_features_selection):
         for name, classifier, _, _ in CLASSIFIERS:
-            print(threshold, name)
-            parameters = FITTING_PARAMETERS[name]
-            model = GridSearchCV(classifier, parameters, cv=2).fit(X_train, dataframes['Y_class_train'])
-            estimator = model.best_estimator_
-            y_pred = estimator.predict(X_test)
-            scores[name] = append_scores(scores[name], dataframes['Y_class_test'], y_pred, estimator, lasso_features)
+            print(thresholds[idx], name)
+            scores[name] = get_scores_for_features(scores, name, classifier, dataframes, lasso_features)
     return scores
 
 def do_lasso(app, dataframes, features):
-    lasso_scores = {}
+    thresholds = LASSO_THRESHOLDS
+    lasso_features = get_lasso_features(dataframes, features, thresholds)
+    print(lasso_features)
     for i in range(30):
-        print('Starting LASSO run: ',str(i+1))
+        print('Starting lasso run: ',str(i+1))
         run_id = get_run_id(app,"Feature Selection LASSO", 'test', 10, 'NS')
-        thresholds = LASSO_THRESHOLDS
-        lasso_scores['LASSO'] = get_lasso_scores(dataframes, features, thresholds)
-        save_method_results(app, lasso_scores, run_id, thresholds=thresholds)
+        lasso_scores = {}
+        lasso_scores['LASSO'] = get_lasso_scores(lasso_features, dataframes, thresholds)
+        save_method_results(app, lasso_scores, run_id, 'embedded', thresholds=thresholds)
         complete_run(app, run_id)
         

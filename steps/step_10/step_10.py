@@ -1,9 +1,9 @@
 import sys
-from steps.step_10.step_10_lasso import do_lasso
-from steps.step_10.step_10_shap_select import do_shap_select
 from steps.step_generic_code.dataframe_knee_operations import get_dataframe
 from steps.step_generic_code.general_functions import start_logging
 from steps.step_10.step_10_filter_methods import do_filter_methods
+from steps.step_10.step_10_lasso import do_lasso
+from steps.step_10.step_10_shap_select import do_shap_select
 from steps.step_10.step_10_plot import create_plots
 
 def get_run_type():

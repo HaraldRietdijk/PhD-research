@@ -131,3 +131,28 @@ select mr.method_id, mr.model, mr.nr_features, mr.threshold, avg(mr.accuracy) as
 from fs_method_results mr
 group by mr.method_id, mr.model, mr.nr_features, mr.threshold
 order by mr.method_id, mr.model, acc desc, f1 desc;
+
+select maxr.method_id, maxr.model, rf.feature, abs(avg(rf.coefficient)) as score, count(*)
+from fs_method_results_features rf
+join (select mrf.* 
+		from fs_method_results mrf
+		join (select mr.method_id as method_id, mr.model as model, max(mr.accuracy) as acc, max(mr.f1_score) as f1, min(mr.nr_features) as feat
+			from fs_method_results mr
+			left join fs_method_results mrm on mr.method_id = mrm.method_id and mr.model = mrm.model 
+								and  (mr.accuracy, mr.f1_score,-mr.nr_features) < (mrm.accuracy, mrm.f1_score,-mr.nr_features)
+			where mrm.accuracy is null
+			group by mr.method_id, mr.model) as mrmax
+		on mrf.method_id = mrmax.method_id and mrf.model = mrmax.model 
+		and mrf.accuracy = mrmax.acc and mrf.f1_score = mrmax.f1
+		and mrf.nr_features = mrmax.feat) as maxr on rf.result_id = maxr.id
+group by maxr.method_id, maxr.model, rf.feature
+having score=0
+order by maxr.method_id, maxr.model, abs(avg(rf.coefficient)) desc, rf.feature;
+
+-- counting features use and not used
+select mr.method_id, mr.model,count(*) 
+from fs_method_results_features rf
+join fs_method_results mr on mr.id = rf.result_id
+where mr.method_id in (1,2,3,6) and rf.coefficient=0
+group by mr.method_id, mr.model
+order by mr.method_id, mr.model;

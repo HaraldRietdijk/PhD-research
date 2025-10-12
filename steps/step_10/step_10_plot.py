@@ -92,7 +92,8 @@ def get_scores_per_method(app, threshold_methods, run_id, model='all'):
                                   .join(METHOD_RESULTS, SELECTION_METHOD.id==METHOD_RESULTS.method_id)\
                                   .filter(and_(or_(METHOD_RESULTS.run_id==run_id, run_id==-1),
                                                or_(METHOD_RESULTS.model==model, model=='all'),
-                                               METHOD_RESULTS.method_id.notin_(threshold_methods)))\
+                                               METHOD_RESULTS.method_id.notin_(threshold_methods),
+                                               SELECTION_METHOD.type!='base'))\
                                   .group_by(SELECTION_METHOD.name, METHOD_RESULTS.nr_features, METHOD_RESULTS.threshold)\
                                   .order_by(SELECTION_METHOD.name, METHOD_RESULTS.nr_features).all()
     scores_per_method['OnFeature'] = proces_query_results(scores_per_method['OnFeature'], average_accuracy)
@@ -103,7 +104,8 @@ def get_scores_per_method(app, threshold_methods, run_id, model='all'):
                                   .join(METHOD_RESULTS, SELECTION_METHOD.id==METHOD_RESULTS.method_id)\
                                   .filter(and_(or_(METHOD_RESULTS.run_id==run_id, run_id==-1),
                                                or_(METHOD_RESULTS.model==model, model=='all'),
-                                               METHOD_RESULTS.method_id.in_(threshold_methods)))\
+                                               METHOD_RESULTS.method_id.in_(threshold_methods),
+                                               SELECTION_METHOD.type!='base'))\
                                   .group_by(SELECTION_METHOD.name, METHOD_RESULTS.threshold)\
                                   .order_by(SELECTION_METHOD.name, METHOD_RESULTS.threshold).all()
     scores_per_method['OnThreshold'] = proces_query_results(scores_per_method['OnThreshold'], threshold_accuracy)
@@ -148,13 +150,14 @@ def plot_metrics_per_model_per_method(scores_per_model, folder, run_id=-1):
     if run_id>-1:
         folder = folder +'/run_' + str(run_id)
     check_folder(folder)
-    for model, scores_per_method in scores_per_model.items():
-        for method, method_scores in scores_per_method['OnThreshold'].items():
-            title = 'Average metrics for ' + model + ' using ' + method
-            name = 'metrics_for_' + model + '_' + method
-            model_folder = folder + '/' + model
-            check_folder(model_folder)
-            plot_scoring(method_scores, model_folder, title, name)
+    for model, scores_per_type in scores_per_model.items():
+        for scores_per_method in scores_per_type.values():
+            for method, method_scores in scores_per_method.items():
+                title = 'Average metrics for ' + model + ' using ' + method
+                name = 'metrics_for_' + model + '_' + method
+                model_folder = folder + '/' + model
+                check_folder(model_folder)
+                plot_scoring(method_scores, model_folder, title, name)
 
 def plot_accuracy_for_all_methods_per_model(scores_per_model, folder, run_id=-1):
     # 8 graphs (8 models) with four lines, one per method
@@ -176,6 +179,6 @@ def create_plots(app, folder, run_id=-1):
     scores_per_model = get_scores_per_model(app, threshold_methods, run_id)
     plot_metrics_over_all_models_per_method(scores_per_method, folder) # 4 graphs (4 methods) with each four lines, one line per metric, taking the average metric over all models
     plot_accuracy_for_all_methods_per_features(scores_per_method, folder) # one graph with four lines, one line per method, average over all models
-    plot_metrics_per_model_per_method(scores_per_model, folder) # 24 graphs (3*8 models) with four lines, one per metric
-    plot_accuracy_for_all_methods_per_model(scores_per_model, folder, run_id) # 24 graphs (3*8 models) with four lines, one per metric
+    plot_metrics_per_model_per_method(scores_per_model, folder) # 32 graphs (4*8 models) with four lines, one per metric
+    plot_accuracy_for_all_methods_per_model(scores_per_model, folder, run_id) # 8 graphs (8 models) with three lines, one per metric
 
