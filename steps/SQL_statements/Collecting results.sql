@@ -150,9 +150,10 @@ having score=0
 order by maxr.method_id, maxr.model, abs(avg(rf.coefficient)) desc, rf.feature;
 
 -- counting features use and not used
-select mr.method_id, mr.model,count(*) 
+select sm.type, sm.name, mr.model, count(*) 
 from fs_method_results_features rf
 join fs_method_results mr on mr.id = rf.result_id
-where mr.method_id in (1,2,3,6) and rf.coefficient=0
-group by mr.method_id, mr.model
-order by mr.method_id, mr.model;
+join fs_selection_method sm on sm.id = mr.method_id
+where sm.type <>'base' -- and rf.coefficient=0
+group by sm.type, sm.name, mr.model
+order by sm.type, sm.name, mr.model;
