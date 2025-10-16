@@ -157,3 +157,18 @@ join fs_selection_method sm on sm.id = mr.method_id
 where sm.type <>'base' -- and rf.coefficient=0
 group by sm.type, sm.name, mr.model
 order by sm.type, sm.name, mr.model;
+
+-- Get standard deviation of result per model
+select underroot.model, round(avg(underroot.accuracy),2) as accuracy, round(sqrt(sum(underroot.vari)),2) as standard_dev from
+(select dif.accuracy, dif.model, power(dif.diference,2)/total as vari from
+(select mr.*, mr.accuracy-average.acc as diference, total
+			from activity.fs_method_results mr
+			join (SELECT mr2.method_id, mr2.model, avg(mr2.accuracy) as acc, count(*) as total 
+					FROM activity.fs_method_results mr2
+					where mr2.method_id=7
+					group by mr2.method_id, model
+					order by mr2.method_id, mr2.model) as average
+					on average.method_id = mr.method_id and average.model = mr.model) as dif
+                    ) as underroot 
+	group by model
+    order by model

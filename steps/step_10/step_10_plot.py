@@ -7,9 +7,9 @@ import numpy as np
 from database.models.feature_selection_data import SELECTION_METHOD, METHOD_RESULTS
 from steps.step_generic_code.general_functions import check_folder
 
-COLORS = ['tab:red','tab:blue','tab:orange','tab:green']
+COLORS = ['red','blue','orange','green','cyan','grey','brown','gold']
 
-def plot_scoring(scores, folder, title, name):
+def plot_scoring(scores, folder, title, name, loc='lower right', use_percent=False):
     def determine_x():
         x = []
         only_thresholds = False
@@ -23,17 +23,25 @@ def plot_scoring(scores, folder, title, name):
             else:
                 features = True
                 only_thresholds = False
-            if only_thresholds:
+            if only_thresholds and use_percent:
                 x = [value/min(threshold_values) for value in threshold_values]
         return x, only_thresholds
     
     def set_x_labels():
         if thresholds:
-            ax1.set_xticks(x, labels=line_data['threshold'])
-            ax1.set_xlabel("Threshold used")
+            if use_percent:
+                x_title = "Confidence level (%)"
+                x_labels = [ int(100*threshold) for threshold in line_data['threshold']]
+            else:
+                x_title = "Nr. of Features used"
+                x_labels = line_data['x']
+            label_x_pos = x
         else:
-            ax1.set_xticks(np.arange(1, len(x), step = 4))
-            ax1.set_xlabel("Nr. of Features used")
+            x_title = "Nr. of Features used"
+            label_x_pos = (np.arange(1, len(x), step = 4))
+            x_labels = label_x_pos
+        ax1.set_xticks(label_x_pos, labels=x_labels)
+        ax1.set_xlabel(x_title)
 
     plt.rcParams["font.family"] = "serif"
     fig, ax1 = plt.subplots()
@@ -49,7 +57,7 @@ def plot_scoring(scores, folder, title, name):
             lines = ax1.plot(x_used, line_data['y'], color=line_data['color'], label=label)
         else:
             lines = lines + ax1.plot(x_used, line_data['y'], color=line_data['color'], label=label)
-    ax1.legend(lines, [line.get_label() for line in lines], loc='lower right')
+    ax1.legend(lines, [line.get_label() for line in lines], loc=loc)
     name = folder + '/' + name + '.png'
     plt.title(title)
     plt.savefig(name, format='png')
@@ -118,17 +126,6 @@ def get_scores_per_model(app, threshold_methods, run_id):
         scores_per_model[model[0]] = get_scores_per_method(app, threshold_methods, run_id, model=model[0])
     return scores_per_model
 
-def plot_metrics_over_all_models_per_method(scores_per_method, folder, run_id=-1):
-    folder = folder +'/plots/metric_per_method'
-    if run_id>-1:
-        folder = folder +'/run_' + str(run_id)
-    check_folder(folder)
-    for scores_per_type in scores_per_method.values():
-        for method, method_scores in scores_per_type.items():
-            title = 'Average metrics for ' + method
-            name = 'metrics_for_' + method
-            plot_scoring(method_scores, folder, title, name)
-
 def get_accuracy_for_all_methods(scores_per_method):
     accuracy_all_methods = {'OnFeature' : {}, 'OnThreshold' : {}}
     for method_type, scores_per_type in scores_per_method.items():
@@ -137,6 +134,40 @@ def get_accuracy_for_all_methods(scores_per_method):
             accuracy_all_methods[method_type][method_scores[0]]['color'] = COLORS[idx]
     return accuracy_all_methods
 
+def get_accuracy_per_method_per_model(scores_per_model, model_selection, method_selection):
+    accuracy_per_method_per_model = {}
+    color_idx = {}
+    color_count = 0
+    for model, scores_per_type in scores_per_model.items():
+        if (model in model_selection) or (len(model_selection)==0):
+            color_idx[model]=color_count
+            color_count=color_count + 1
+            for scores_per_method in scores_per_type.values():
+                for method, method_scores in scores_per_method.items():
+                    if (method in method_selection) or (len(method_selection)==0):
+                        if not method in accuracy_per_method_per_model.keys():
+                            accuracy_per_method_per_model[method]={}
+                        # print (method_scores)
+                        accuracy_per_method_per_model[method][model] = method_scores['accuracy']
+                        accuracy_per_method_per_model[method][model]['color'] = COLORS[color_idx[model]]
+    return accuracy_per_method_per_model
+
+def plot_metrics_over_all_models_per_method(scores_per_method, folder, run_id):
+    # four graphs (4 methods), with four lines, one line per metric
+    folder = folder +'/plots/metric_per_method'
+    if run_id>-1:
+        folder = folder +'/run_' + str(run_id)
+    check_folder(folder)
+    for scores_per_type in scores_per_method.values():
+        for method, method_scores in scores_per_type.items():
+            title = 'Average metrics for ' + method
+            name = 'metrics_for_' + method
+            if method == 'shap':
+                use_percent = True
+            else:
+                use_percent = False
+            plot_scoring(method_scores, folder, title, name, use_percent=use_percent)
+
 def plot_accuracy_for_all_methods_per_features(scores_per_method, folder):
     # one graph with four lines, one line per method, average over all models
     folder = folder +'/plots/metric_per_method'
@@ -144,7 +175,7 @@ def plot_accuracy_for_all_methods_per_features(scores_per_method, folder):
     accuracy_all_methods = get_accuracy_for_all_methods(scores_per_method)
     plot_scoring(accuracy_all_methods['OnFeature'], folder, title='Accuracy for all methods', name='accuracy_all_methods')
 
-def plot_metrics_per_model_per_method(scores_per_model, folder, run_id=-1):
+def plot_metrics_per_model_per_method(scores_per_model, folder, run_id):
     # 32 graphs (4 methods * 8 models) with four lines, one per metric
     folder = folder +'/plots/metric_per_model'
     if run_id>-1:
@@ -156,10 +187,14 @@ def plot_metrics_per_model_per_method(scores_per_model, folder, run_id=-1):
                 title = 'Average metrics for ' + model + ' using ' + method
                 name = 'metrics_for_' + model + '_' + method
                 model_folder = folder + '/' + model
+                if method == 'shap':
+                    use_percent = True
+                else:
+                    use_percent = False
                 check_folder(model_folder)
-                plot_scoring(method_scores, model_folder, title, name)
+                plot_scoring(method_scores, model_folder, title, name,use_percent=use_percent)
 
-def plot_accuracy_for_all_methods_per_model(scores_per_model, folder, run_id=-1):
+def plot_accuracy_for_all_methods_per_model(scores_per_model, folder, run_id):
     # 8 graphs (8 models) with four lines, one per method
     folder = folder +'/plots/metric_per_model'
     if run_id>-1:
@@ -173,12 +208,44 @@ def plot_accuracy_for_all_methods_per_model(scores_per_model, folder, run_id=-1)
         check_folder(model_folder)
         plot_scoring(accuracy_all_methods['OnFeature'], model_folder, title, name)
 
+def plot_metrics_per_method_per_model(scores_per_model, folder, run_id, model_selection=[], method_selection = []):
+    # 4 graphs (4 methods) with eight lines, one per model
+    folder = folder +'/plots/metric_per_method'
+    if run_id>-1:
+        folder = folder +'/run_' + str(run_id)
+    check_folder(folder)
+    scores_method_per_model = get_accuracy_per_method_per_model(scores_per_model, model_selection, method_selection)
+    for method, method_scores in scores_method_per_model.items():
+        title = 'Average metrics for ' + method + ' per model '
+        if len(model_selection)==0:
+            name = 'metrics_per_model_for_' + method 
+        else:
+            name = 'metrics_selected_'+ method +'_' + '_'.join(model_selection) 
+        if method == 'shap':
+            use_percent = True
+        else:
+            use_percent = False
+        method_folder = folder + '/' + method
+        check_folder(method_folder)
+        plot_scoring(method_scores, method_folder, title, name, use_percent=use_percent)
+
 def create_plots(app, folder, run_id=-1):
     threshold_methods = get_threshold_methods(app)
     scores_per_method = get_scores_per_method(app, threshold_methods, run_id)
     scores_per_model = get_scores_per_model(app, threshold_methods, run_id)
-    plot_metrics_over_all_models_per_method(scores_per_method, folder) # 4 graphs (4 methods) with each four lines, one line per metric, taking the average metric over all models
+    plot_metrics_over_all_models_per_method(scores_per_method, folder, run_id) # 4 graphs (4 methods) with each four lines, one line per metric, taking the average metric over all models
     plot_accuracy_for_all_methods_per_features(scores_per_method, folder) # one graph with four lines, one line per method, average over all models
-    plot_metrics_per_model_per_method(scores_per_model, folder) # 32 graphs (4*8 models) with four lines, one per metric
+    plot_metrics_per_model_per_method(scores_per_model, folder, run_id) # 32 graphs (4*8 models) with four lines, one per metric
     plot_accuracy_for_all_methods_per_model(scores_per_model, folder, run_id) # 8 graphs (8 models) with three lines, one per metric
-
+    plot_metrics_per_method_per_model(scores_per_model, folder, run_id)# 4 graphs (4 methods) with eight lines, one per model
+    # models = ['ADA','LSVC','DT','GBC']
+    methods = ['LASSO']
+    models = ['ADA','LDA','LSVC','GBC','SGD']#Lasso goed
+    plot_metrics_per_method_per_model(scores_per_model, folder, run_id, model_selection=models, method_selection=methods)# 4 graphs (4 methods) with eight lines, one per model
+    models = ['RF','LR','DT']#Lasso fout
+    plot_metrics_per_method_per_model(scores_per_model, folder, run_id, model_selection=models, method_selection=methods)# 4 graphs (4 methods) with eight lines, one per model
+    methods = ['shap']
+    models = ['LR','LDA','GBC']#Shap goed
+    plot_metrics_per_method_per_model(scores_per_model, folder, run_id, model_selection=models, method_selection=methods)# 4 graphs (4 methods) with eight lines, one per model
+    models = ['ADA','DT','RF','SGD','LSVC']#Shap fout
+    plot_metrics_per_method_per_model(scores_per_model, folder, run_id, model_selection=models, method_selection=methods)# 4 graphs (4 methods) with eight lines, one per model

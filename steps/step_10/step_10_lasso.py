@@ -21,6 +21,10 @@ def get_coefficient_threshold(importance, threshold):
 
 def get_lasso_features(dataframes, features, thresholds):
     lasso_fitting, importance = get_lasso_fitting(dataframes)
+    save_lasso = pd.DataFrame()
+    save_lasso['features']=features
+    save_lasso['score']=importance['normalized']
+    save_lasso.to_csv('lasso_features.csv', index=False)#TO DO: should be put in database.
     lasso_features = []
     for threshold in thresholds:
         coefficient_threshold = get_coefficient_threshold(importance, threshold)
