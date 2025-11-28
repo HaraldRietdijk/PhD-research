@@ -172,3 +172,15 @@ select underroot.model, round(avg(underroot.accuracy),2) as accuracy, round(sqrt
                     ) as underroot 
 	group by model
     order by model
+
+-- get standard deviation per method per nr of features
+select mr2.method_id, mr2.nr_features, sum(power(mr2.accuracy-mr1.acc,2)/mr1.aantal) as standard_deviation
+from fs_method_results mr2 
+join (select mr.method_id, mr.nr_features, avg(mr.accuracy) as acc, count(*) as aantal
+	  from fs_method_results mr
+	  where mr.method_id in (1,2,3)
+	  group by mr.method_id, mr.nr_features
+	  order by mr.method_id, mr.nr_features) as mr1 
+	  on mr2.method_id = mr1.method_id and mr2.nr_features = mr1.nr_features
+group by mr2.method_id, mr2.nr_features
+order by mr2.method_id, mr2.nr_features

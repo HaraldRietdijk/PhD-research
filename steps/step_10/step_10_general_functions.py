@@ -78,3 +78,18 @@ def save_method_results(app, scores, run_id, method_type,thresholds = None):
                                                        idx, score_per_model, thresholds)
                 store_features_for_result(app, score_per_model['features'][idx], 
                                           score_per_model['coefficients'][idx] , method_results_id)
+                
+def save_feature_ranking(app, method, features, importance):
+    feature_scores = zip(features, importance)
+    method_id = get_method_id(app, method, 'base')
+    method_results = METHOD_RESULTS(method_id = method_id, run_id = 0, model = 'ALL', 
+                                    nr_features = 44, threshold = 0, accuracy = 0, f1_score = 0,
+                                    precision = 0,  recall = 0
+                                    )
+    for feature, score in feature_scores:
+         method_feature = METHOD_RESULTS_FEATURES(result_id = method_results.id,
+                                                  feature = feature,
+                                                  coefficient = score
+                                                 )
+         app.session.add(method_feature)
+    app.session.commit()

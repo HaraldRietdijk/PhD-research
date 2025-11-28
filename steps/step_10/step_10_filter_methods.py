@@ -10,11 +10,11 @@ def get_filter_method_features(filter_methods, dataframes, features):
         method_features = []
         for k in range(1,len(features)):
                 select_method = SelectKBest(method[1],k=k)
-                method_features.append(select_method.fit(dataframes['X_train'],dataframes['Y_class_train']).get_feature_names_out(features))
+                method_features.append(select_method.fit(dataframes['X_train'],dataframes[method[2]]).get_feature_names_out(features))
         filter_features[method[0]] = method_features
     return filter_features
 
-def get_scores_for_filter_method(method_features_selection, dataframes, features):
+def get_scores_for_filter_method(method_features_selection, dataframes):
     scores = init_scores()
     for method_features in method_features_selection:
         for name, classifier, _, _ in CLASSIFIERS:
@@ -30,7 +30,7 @@ def do_filter_methods(app, dataframes, features):
         run_id = get_run_id(app,"Feature Selection filter", 'test', 10, 'NS')
         filter_methods_scores = {}
         for method in filter_methods:
-            filter_methods_scores[method[0]] = get_scores_for_filter_method(filter_features[method[0]], dataframes, features)
+            filter_methods_scores[method[0]] = get_scores_for_filter_method(filter_features[method[0]], dataframes)
         save_method_results(app, filter_methods_scores, run_id, 'filter')
         complete_run(app, run_id)
 

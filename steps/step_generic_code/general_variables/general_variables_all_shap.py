@@ -1,7 +1,7 @@
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis, QuadraticDiscriminantAnalysis
 from sklearn.dummy import DummyClassifier
 from sklearn.ensemble import RandomForestClassifier, ExtraTreesClassifier, AdaBoostClassifier,BaggingClassifier,GradientBoostingClassifier,HistGradientBoostingClassifier
-from sklearn.feature_selection import chi2, f_classif
+from sklearn.feature_selection import chi2, f_classif, mutual_info_classif, mutual_info_regression, f_regression
 from sklearn.gaussian_process import GaussianProcessClassifier
 from sklearn.gaussian_process.kernels import ConstantKernel
 from sklearn.linear_model import LogisticRegression, SGDClassifier, PassiveAggressiveClassifier, LogisticRegressionCV,\
@@ -110,11 +110,12 @@ CLASSIFIERS = [('LDA',LinearDiscriminantAnalysis(),True,28),
 
 ALGORITHM_PARAMETERS = { algorithm: [parameter for parameter in values[0]] for algorithm, values in FITTING_PARAMETERS.items()}
 
-FILTER_METHODS = [('anova', f_classif), ('chi2', chi2)]
+# FILTER_METHODS = [('anova', f_classif, 'Y_class_train'), ('chi2', chi2, 'Y_class_train')]
+FILTER_METHODS = [('ano_reg', f_regression, 'Y_train'), ('mut_inf_c', mutual_info_classif, 'Y_class_train'), 
+                  ('mut_inf_R', mutual_info_regression, 'Y_train')]
 
 LASSO_THRESHOLDS = [0.005, 0.01, 0.05, 0.1, 0.15, 0.25]
 
 SHAP_THRESHOLDS = [0.01, 0.02, 0.03, 0.04, 0.05, 0.07, 0.10, 0.15]
 
 SEEDS = [10, 270, 333, 41, 500, 999, 123, 456, 789, 888]
-# SEEDS = [456, 789, 888]
