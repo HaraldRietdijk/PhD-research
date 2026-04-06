@@ -4,6 +4,7 @@ from app import app
 
 from steps.run_steps import do_run
 from steps.run_steps_NS import do_run_NS
+from steps.run_steps_Isala import do_run_Isala
 
 if __name__ == "__main__":
     schema="activity"
@@ -20,9 +21,10 @@ if __name__ == "__main__":
               '            Use rawdata to load the Fitbit raw-data\n'
               '            Use test to run the test for given schema\n'
               '            Use force to reset the database completely and recreate all db-objects for the selected schema'
-              '       arg2: orig ns\n'
+              '       arg2: orig ns isala\n'
               '            Use orig to process the original data\n'
               '            Use ns to process the NijSmellinghe data\n'
+              '            Use isala to process the Isala data\n'
               '       arg3: (Optional) clustering type\n'
               '            vfc, ns, full for clustering on parts of the dataset, default vfc\n'
               '            or for step 10 (Optional): full, filter, lasso, shap, plot, default plot\n'
@@ -37,8 +39,10 @@ if __name__ == "__main__":
     else:
         if sys.argv[3]=='orig':
             do_steps = do_run
-        else:
+        if sys.argv[3]=='ns':
             do_steps = do_run_NS
+        else:
+            do_steps = do_run_Isala
         if sys.argv[2]=="force":
             force=True
         create_engine_and_session(app, schema)

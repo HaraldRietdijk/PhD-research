@@ -47,3 +47,9 @@ class AcceleroData(DBActivityModel):
     score = Column(Float(32, 2), nullable=False)
     mets = Column(Float(32,4), nullable=False)
     steps = Column(Integer, default=0)
+
+class IsalaID(DBActivityModel):
+    __tablename__ = "isala_ids"
+
+    pseudo_id = Column(VARCHAR(40), nullable=False, primary_key=True)
+    treatment_id = Column(Integer, ForeignKey(HFT_TREATMENT_T.treatment_id), nullable=False)

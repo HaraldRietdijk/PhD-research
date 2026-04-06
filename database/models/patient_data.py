@@ -70,6 +70,8 @@ class PATIENT_PERSONAL(DBActivityModel):
     highest_education = Column(Integer, ForeignKey(ENUMLISTS.id))
     height = Column(Float)
     weight = Column(Integer)
+    bmi = Column(Float)
+    year_of_birth = Column(Integer)
 
 class RESULT_TYPES(DBActivityModel):
 

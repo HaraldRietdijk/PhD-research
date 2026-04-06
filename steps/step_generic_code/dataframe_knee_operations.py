@@ -1,4 +1,3 @@
-import random
 import pandas as pd
 import numpy as np
 from sqlalchemy import and_
