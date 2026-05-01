@@ -1,3 +1,5 @@
+import sys
+
 from sklearn.feature_selection import SelectKBest
 from steps.step_10.step_10_general_functions import append_scores_for_features, init_scores, save_method_results
 from steps.step_generic_code.general_functions import complete_run, get_run_id
@@ -22,12 +24,15 @@ def get_scores_for_filter_method(method_features_selection, dataframes):
             scores[name] = append_scores_for_features(scores, name, classifier, dataframes, method_features)
     return scores
 
-def do_filter_methods(app, dataframes, features):
+def do_filter_methods(app, dataframes, features, source='NS'):
     filter_methods = FILTER_METHODS
+    if len(sys.argv)==6:
+        filter_methods = [FILTER_METHODS[int(sys.argv[5])]]
+    print(filter_methods)
     filter_features = get_filter_method_features(filter_methods, dataframes, features)
     for i in range(30):
         print('Starting filter run: ',str(i+1))
-        run_id = get_run_id(app,"Feature Selection filter", 'test', 10, 'NS')
+        run_id = get_run_id(app,"Feature Selection filter", 'test', 10, source)
         filter_methods_scores = {}
         for method in filter_methods:
             filter_methods_scores[method[0]] = get_scores_for_filter_method(filter_features[method[0]], dataframes)

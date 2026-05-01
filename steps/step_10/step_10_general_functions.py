@@ -2,6 +2,7 @@ from sklearn.metrics import accuracy_score, f1_score, precision_score, recall_sc
 from sklearn.model_selection import GridSearchCV
 
 from database.models.feature_selection_data import SELECTION_METHOD, METHOD_RESULTS, METHOD_RESULTS_FEATURES
+from steps.step_generic_code.general_functions import complete_run, get_run_id
 from steps.step_generic_code.general_variables.general_variables_all_shap import CLASSIFIERS, FITTING_PARAMETERS
       
 def init_scores():
@@ -69,7 +70,7 @@ def get_method_id(app, method, method_type):
         app.session.commit()
     return selection_method.id
 
-def save_method_results(app, scores, run_id, method_type,thresholds = None):
+def save_method_results(app, scores, run_id, method_type, thresholds = None):
     for method, scores_per_method in scores.items():
         method_id = get_method_id(app, method, method_type)
         for model, score_per_model in scores_per_method.items():
@@ -79,17 +80,24 @@ def save_method_results(app, scores, run_id, method_type,thresholds = None):
                 store_features_for_result(app, score_per_model['features'][idx], 
                                           score_per_model['coefficients'][idx] , method_results_id)
                 
-def save_feature_ranking(app, method, features, importance):
-    feature_scores = zip(features, importance)
+def save_feature_ranking(app, method, features, importance, source):
+    # feature_scores = zip(features, importance)
+    def save_feature(row):
+        method_feature = METHOD_RESULTS_FEATURES(result_id = method_result.id,
+                                                feature = row['features'],
+                                                coefficient = row['coefficient']
+                                                )
+        app.session.add(method_feature)
+
+    run_id = get_run_id(app,"Feature Selection LASSO ranking", 'test', 10, source)
+    method = method + "_rank"
     method_id = get_method_id(app, method, 'base')
-    method_results = METHOD_RESULTS(method_id = method_id, run_id = 0, model = 'ALL', 
-                                    nr_features = 44, threshold = 0, accuracy = 0, f1_score = 0,
+    method_result = METHOD_RESULTS(method_id = method_id, run_id = run_id, model = method, 
+                                    nr_features = len(features), threshold = 0, accuracy = 0, f1_score = 0,
                                     precision = 0,  recall = 0
                                     )
-    for feature, score in feature_scores:
-         method_feature = METHOD_RESULTS_FEATURES(result_id = method_results.id,
-                                                  feature = feature,
-                                                  coefficient = score
-                                                 )
-         app.session.add(method_feature)
+    app.session.add(method_result)
     app.session.commit()
+    importance.apply(save_feature, axis=1)
+    app.session.commit()
+    complete_run(app, run_id)

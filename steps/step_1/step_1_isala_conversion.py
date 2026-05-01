@@ -41,7 +41,7 @@ CONVERSION_MATRIX = {
                                               ("Admission_source","admission_source","ADSOURCE"),
                                               ("Discharge_source","discharge_source","DISSOURCE"),
                                               ("validation_surgery","validation_surgery","VALIDATION"),("ICU","icu",""),
-                                              ("neoadjuvant","neoadjuvant","")]),
+                                              ("neoadjuvant","neoadjuvant",""),("Type_surgery_code","type_surgery_code","")]),
     "ICU details" : (ICU_DETAILS,[("ICU_los","los",""),("IC_start","start_date",""),("IC_end","end_date","")]),
     "Operation complication" : (OPERATION_COMPLICATION,[("Feeding_tube","feeding_tube",""),("Complications_number","complications_number",""),
                                                         ("Complication","complication",""),("Clavien_dindo","clavien_dindo","CLAVIEN"),

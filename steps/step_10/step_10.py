@@ -28,11 +28,14 @@ def run_method_selection(app, run_type, run_all_methods):
         do_filter_methods(app, dataframes, features)
     if (run_type=="lasso") or run_all_methods: 
         do_lasso(app, dataframes, features)
+    if (run_type=="lasso_steps") or run_all_methods: 
+        do_lasso(app, dataframes, features, steps=True)
     if (run_type=="shap") or run_all_methods: 
         do_shap_select(app, dataframes, features)
 
 def do_step_10(app):
-    folder='results/fs_shap'
+    folder='results/article_8/ns'
+    print(folder)
     start_logging(folder)
     run_type, run_all_methods = get_run_type()
     if run_type!='plot':

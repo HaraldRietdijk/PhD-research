@@ -5,9 +5,11 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from database.models.feature_selection_data import SELECTION_METHOD, METHOD_RESULTS
+from database.models.hft_tables import HFT_RUN_T
 from steps.step_generic_code.general_functions import check_folder
 
-COLORS = ['red','blue','orange','green','cyan','grey','brown','gold']
+COLORS = ['red','blue','orange','green','cyan','grey','brown','gold','black','red','blue'
+          ,'orange','green','cyan','grey','brown','gold','black','red','blue','orange','green','cyan','grey','brown','gold']
 
 def plot_scoring(scores, folder, title, name, loc='lower right', use_percent=False):
     def determine_x():
@@ -34,11 +36,11 @@ def plot_scoring(scores, folder, title, name, loc='lower right', use_percent=Fal
                 x_labels = [ int(100*threshold) for threshold in line_data['threshold']]
             else:
                 x_title = "Nr. of Features used"
-                x_labels = line_data['x']
+                x_labels = [int(label) for label in line_data['x']]
             label_x_pos = x
         else:
             x_title = "Nr. of Features used"
-            label_x_pos = (np.arange(1, len(x), step = 4))
+            label_x_pos = (np.arange(1, len(x)+1, step = 4))
             x_labels = label_x_pos
         ax1.set_xticks(label_x_pos, labels=x_labels)
         ax1.set_xlabel(x_title)
@@ -87,21 +89,24 @@ def get_threshold_methods(app):
     threshold_methods_query = app.session.query(METHOD_RESULTS.method_id).distinct(METHOD_RESULTS.method_id)\
                                    .join(RESULTS_2,and_(METHOD_RESULTS.method_id==RESULTS_2.method_id,
                                                         METHOD_RESULTS.threshold==RESULTS_2.threshold))\
+                                   .join(SELECTION_METHOD, SELECTION_METHOD.id==METHOD_RESULTS.method_id)\
                                    .filter(and_(METHOD_RESULTS.nr_features<RESULTS_2.nr_features,
-                                                METHOD_RESULTS.threshold>0)).all()   
+                                                METHOD_RESULTS.threshold>0,SELECTION_METHOD.type!='base')).all()   
     return [row[0] for row in threshold_methods_query]
 
-def get_scores_per_method(app, threshold_methods, run_id, model='all'):
+def get_scores_per_method(app, threshold_methods, run_id, source, model='all'):
     scores_per_method = {'OnFeature' : {}, 'OnThreshold' : {}}
     print('Collecting scores for ', model)
     average_accuracy = app.session.query(SELECTION_METHOD.name, METHOD_RESULTS.nr_features, METHOD_RESULTS.threshold,
                                          func.avg(METHOD_RESULTS.accuracy), func.avg(METHOD_RESULTS.f1_score),
                                          func.avg(METHOD_RESULTS.precision), func.avg(METHOD_RESULTS.recall))\
                                   .join(METHOD_RESULTS, SELECTION_METHOD.id==METHOD_RESULTS.method_id)\
+                                  .join(HFT_RUN_T, METHOD_RESULTS.run_id==HFT_RUN_T.run_id)\
                                   .filter(and_(or_(METHOD_RESULTS.run_id==run_id, run_id==-1),
                                                or_(METHOD_RESULTS.model==model, model=='all'),
                                                METHOD_RESULTS.method_id.notin_(threshold_methods),
-                                               SELECTION_METHOD.type!='base'))\
+                                               SELECTION_METHOD.create_plot==True,
+                                               HFT_RUN_T.data_set==source))\
                                   .group_by(SELECTION_METHOD.name, METHOD_RESULTS.nr_features, METHOD_RESULTS.threshold)\
                                   .order_by(SELECTION_METHOD.name, METHOD_RESULTS.nr_features).all()
     scores_per_method['OnFeature'] = proces_query_results(scores_per_method['OnFeature'], average_accuracy)
@@ -110,28 +115,40 @@ def get_scores_per_method(app, threshold_methods, run_id, model='all'):
                                          func.avg(METHOD_RESULTS.accuracy), func.avg(METHOD_RESULTS.f1_score),
                                          func.avg(METHOD_RESULTS.precision), func.avg(METHOD_RESULTS.recall))\
                                   .join(METHOD_RESULTS, SELECTION_METHOD.id==METHOD_RESULTS.method_id)\
+                                  .join(HFT_RUN_T, METHOD_RESULTS.run_id==HFT_RUN_T.run_id)\
                                   .filter(and_(or_(METHOD_RESULTS.run_id==run_id, run_id==-1),
                                                or_(METHOD_RESULTS.model==model, model=='all'),
                                                METHOD_RESULTS.method_id.in_(threshold_methods),
-                                               SELECTION_METHOD.type!='base'))\
+                                               SELECTION_METHOD.type!='base',
+                                               HFT_RUN_T.data_set==source))\
                                   .group_by(SELECTION_METHOD.name, METHOD_RESULTS.threshold)\
                                   .order_by(SELECTION_METHOD.name, METHOD_RESULTS.threshold).all()
     scores_per_method['OnThreshold'] = proces_query_results(scores_per_method['OnThreshold'], threshold_accuracy)
     return scores_per_method
 
-def get_scores_per_model(app, threshold_methods, run_id):
+def get_scores_per_model(app, threshold_methods, run_id, source):
     scores_per_model = {}
-    models = app.session.query(METHOD_RESULTS.model).distinct(METHOD_RESULTS.model).all()
+    models = app.session.query(METHOD_RESULTS.model).distinct(METHOD_RESULTS.model)\
+                        .join(SELECTION_METHOD, METHOD_RESULTS.method_id==SELECTION_METHOD.id)\
+                        .filter(SELECTION_METHOD.create_plot==True).all()
     for model in models:
-        scores_per_model[model[0]] = get_scores_per_method(app, threshold_methods, run_id, model=model[0])
+        scores_per_model[model[0]] = get_scores_per_method(app, threshold_methods, run_id, source, model=model[0])
     return scores_per_model
 
 def get_accuracy_for_all_methods(scores_per_method):
-    accuracy_all_methods = {'OnFeature' : {}, 'OnThreshold' : {}}
+    accuracy_all_methods = {'OnFeature' : {}, 'OnThreshold' : {}, 'Both' : {}}
+    start_idx = 0
+    number_of_methods = 0
     for method_type, scores_per_type in scores_per_method.items():
+        print(method_type)
         for idx, method_scores in enumerate(scores_per_type.items()):
+            print(method_scores[0])
             accuracy_all_methods[method_type][method_scores[0]] = method_scores[1]['accuracy']
             accuracy_all_methods[method_type][method_scores[0]]['color'] = COLORS[idx]
+            accuracy_all_methods['Both'][method_scores[0]] = method_scores[1]['accuracy']
+            accuracy_all_methods['Both'][method_scores[0]]['color'] = COLORS[idx + start_idx]
+            number_of_methods = idx
+        start_idx = start_idx + number_of_methods + 1
     return accuracy_all_methods
 
 def get_accuracy_per_method_per_model(scores_per_model, model_selection, method_selection):
@@ -174,6 +191,7 @@ def plot_accuracy_for_all_methods_per_features(scores_per_method, folder):
     check_folder(folder)
     accuracy_all_methods = get_accuracy_for_all_methods(scores_per_method)
     plot_scoring(accuracy_all_methods['OnFeature'], folder, title='Accuracy for all methods', name='accuracy_all_methods')
+    plot_scoring(accuracy_all_methods['Both'], folder, title='Accuracy for all methods', name='accuracy_all_methods_1')
 
 def plot_metrics_per_model_per_method(scores_per_model, folder, run_id):
     # 32 graphs (4 methods * 8 models) with four lines, one per metric
@@ -229,10 +247,10 @@ def plot_metrics_per_method_per_model(scores_per_model, folder, run_id, model_se
         check_folder(method_folder)
         plot_scoring(method_scores, method_folder, title, name, use_percent=use_percent)
 
-def create_plots(app, folder, run_id=-1):
+def create_plots(app, folder, run_id=-1, source='NS'):
     threshold_methods = get_threshold_methods(app)
-    scores_per_method = get_scores_per_method(app, threshold_methods, run_id)
-    scores_per_model = get_scores_per_model(app, threshold_methods, run_id)
+    scores_per_method = get_scores_per_method(app, threshold_methods, run_id, source)
+    scores_per_model = get_scores_per_model(app, threshold_methods, run_id, source)
     plot_metrics_over_all_models_per_method(scores_per_method, folder, run_id) # 4 graphs (4 methods) with each four lines, one line per metric, taking the average metric over all models
     plot_accuracy_for_all_methods_per_features(scores_per_method, folder) # one graph with four lines, one line per method, average over all models
     plot_metrics_per_model_per_method(scores_per_model, folder, run_id) # 32 graphs (4*8 models) with four lines, one per metric

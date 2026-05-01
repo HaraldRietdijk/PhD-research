@@ -1,5 +1,6 @@
 from steps.step_1.step_1_Isala import do_step_1_isala
-
+from steps.step_10.step_10_Isala import do_step_10
+from steps.step_11.step_11 import do_step_11
 import sys
 
 def do_run_Isala(app):
@@ -25,5 +26,7 @@ def do_run_Isala(app):
     #     do_step_8(app)
     # if (run_type=="step9") or run_all_steps:
     #     do_step_9(app)
-    # if (run_type=="step10") or run_all_steps:
-    #     do_step_10(app)
+    if (run_type=="step10") or run_all_steps:
+        do_step_10(app)
+    if (run_type=="step11") or run_all_steps:
+        do_step_11(app)

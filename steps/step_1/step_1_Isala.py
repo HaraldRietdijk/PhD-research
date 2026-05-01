@@ -49,22 +49,22 @@ def get_dataframe(app, path):
     return df, df['pseudo_id'].unique()
 
 def get_treatment_id(app, patient, patient_df):
-        isala_id = app.session.query(IsalaID).filter(IsalaID.pseudo_id==patient).first()
-        if isala_id:
-            treatment_id = isala_id.treatment_id
-        else:
-            research_group = 7 if patient_df['Sort_prehabilitation'].iloc[0] in ['ecoach','eCoach'] else 6
-            patient_df['gender'] = patient_df['gender'].map(lambda x: x.lower() if isinstance(x,str) else x)
-            hft_treatment_id = HFT_TREATMENT_T(age = patient_df['Age'].iloc[0], 
-                                               gender = patient_df['gender'].iloc[0],
-                                               research_group = research_group)
-            app.session.add(hft_treatment_id)
-            app.session.commit()
-            treatment_id = hft_treatment_id.treatment_id
-            isala_id = IsalaID(pseudo_id = patient, treatment_id = treatment_id)
-            app.session.add(isala_id)
-            app.session.commit()
-        return treatment_id
+    isala_id = app.session.query(IsalaID).filter(IsalaID.pseudo_id==patient).first()
+    if isala_id:
+        treatment_id = isala_id.treatment_id
+    else:
+        research_group = 7 if patient_df['Sort_prehabilitation'].iloc[0] in ['ecoach','eCoach'] else 6
+        patient_df['gender'] = patient_df['gender'].map(lambda x: x.lower() if isinstance(x,str) else x)
+        hft_treatment_id = HFT_TREATMENT_T(age = patient_df['Age'].iloc[0], 
+                                            gender = patient_df['gender'].iloc[0],
+                                            research_group = research_group)
+        app.session.add(hft_treatment_id)
+        app.session.commit()
+        treatment_id = hft_treatment_id.treatment_id
+        isala_id = IsalaID(pseudo_id = patient, treatment_id = treatment_id)
+        app.session.add(isala_id)
+        app.session.commit()
+    return treatment_id
 
 def get_enum_id(app, type, content):
     enum_row = app.session.query(ENUMLISTS).filter(ENUMLISTS.type==type,ENUMLISTS.content==content).first()

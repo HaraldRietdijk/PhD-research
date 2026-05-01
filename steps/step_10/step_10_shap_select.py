@@ -72,13 +72,13 @@ def get_base_features(app, dataframes, features, thresholds):
     complete_run(app, run_id)
     return base_features
 
-def do_shap_select(app, dataframes, features):
+def do_shap_select(app, dataframes, features, source='NS'):
     shap_scores = {}
     thresholds = SHAP_THRESHOLDS
     shap_features = get_base_features(app, dataframes, features, thresholds,)
     for i in range(30):
         print('Starting shap-select run: ',str(i+1))
-        run_id = get_run_id(app,"Feature Selection shap", 'test', 10, 'NS')
+        run_id = get_run_id(app,"Feature Selection shap", 'test', 10, source)
         shap_scores['shap'] = get_shap_scores(dataframes, shap_features, thresholds)
         save_method_results(app, shap_scores, run_id, 'embedded', thresholds=thresholds)
         complete_run(app, run_id)

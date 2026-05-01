@@ -113,6 +113,7 @@ class OPERATION_DETAILS(DBActivityModel):
     procedure_surgery_raw = Column(VARCHAR(256))
     tumor_location = Column(Integer, ForeignKey(ENUMLISTS.id))
     type_anesthesia = Column(Integer, ForeignKey(ENUMLISTS.id))
+    type_surgery_code = Column(Integer)
     type_surgery = Column(Integer, ForeignKey(ENUMLISTS.id))
     neoadjuvant = Column(Boolean)
     complicaties_dcra = Column(Boolean)

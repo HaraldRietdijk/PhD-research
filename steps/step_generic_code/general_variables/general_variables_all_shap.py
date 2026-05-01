@@ -111,10 +111,18 @@ CLASSIFIERS = [('LDA',LinearDiscriminantAnalysis(),True,28),
 ALGORITHM_PARAMETERS = { algorithm: [parameter for parameter in values[0]] for algorithm, values in FITTING_PARAMETERS.items()}
 
 # FILTER_METHODS = [('anova', f_classif, 'Y_class_train'), ('chi2', chi2, 'Y_class_train')]
-FILTER_METHODS = [('ano_reg', f_regression, 'Y_train'), ('mut_inf_c', mutual_info_classif, 'Y_class_train'), 
-                  ('mut_inf_R', mutual_info_regression, 'Y_train')]
+# FILTER_METHODS = [('ano_reg', f_regression, 'Y_train'), ('mut_inf_c', mutual_info_classif, 'Y_class_train'), 
+                #   ('mut_inf_R', mutual_info_regression, 'Y_train')]
 
-LASSO_THRESHOLDS = [0.005, 0.01, 0.05, 0.1, 0.15, 0.25]
+def mut_inf_c_fixed_rs(X, y):
+    return mutual_info_classif(X, y, random_state=0, n_neighbors=3, discrete_features='auto')
+
+FILTER_METHODS = [('anova', f_classif, 'Y_class_train'), 
+                  ('chi2', chi2, 'Y_class_train'), 
+                  ('mut_inf_rs', mut_inf_c_fixed_rs, 'Y_class_train')]
+
+LASSO_THRESHOLDS = {'NS':[0.005, 0.01, 0.05, 0.1, 0.15, 0.25],
+                    'isala':[0.005, 0.01, 0.05, 0.1, 0.15, 0.20]}
 
 # SHAP_THRESHOLDS = [0.01, 0.02, 0.03, 0.04, 0.05, 0.07, 0.10, 0.15]
 # SEEDS = [10, 270, 333, 41, 500, 999, 123, 456, 789, 888]

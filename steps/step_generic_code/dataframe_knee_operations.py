@@ -15,6 +15,8 @@ def update_column(features_df, column_name, update_type, update_values=0):
         features_df[column_name].iloc[:].replace(update_values, inplace=True)
     elif update_type==2: # replace boolean
         features_df[column_name]= features_df[column_name].astype(int)
+    elif update_type==3: # Impute, replace None with median value
+        features_df[column_name]= features_df[column_name].fillna(features_df[column_name].median())
     return features_df
 
 def add_result_column(app, result, features_df, result_type, moment, value_type, update_type, update_values):

@@ -184,3 +184,32 @@ join (select mr.method_id, mr.nr_features, avg(mr.accuracy) as acc, count(*) as 
 	  on mr2.method_id = mr1.method_id and mr2.nr_features = mr1.nr_features
 group by mr2.method_id, mr2.nr_features
 order by mr2.method_id, mr2.nr_features
+
+-- Accuracy based ordering, hoe hoger de AD en hoe hoger de model accuracy bij het gegeven feature, hoe kleiner de bijdrage aan de ranking score
+-- zodat de ranking score oploopt als de feature slechter is.
+SELECT frg.data_set, fr.feature, 
+	   avg((fr.ranking*(1-frg.max_accuracy))*(1-fr.accuracy_delta)/fr.model_accuracy) as ranking_score 
+FROM activity.fs_features_ranking_group frg
+join fs_features_ranking fr on fr.group_id = frg.id
+join fs_selection_method sm on sm.id=frg.method_id
+where sm.use_for_ordering = 1  
+group by frg.data_set, fr.feature
+order by frg.data_set, ranking_score
+
+-- Ranking op basis van s_ordering_contribution gedeeld door de gemiddelde ordering loss van de methode.
+SELECT frg.data_set, fr.feature, avg(favg.avg_ranking-(fr.s_ordering_contribution*favg.distance/ms.ordering_loss)) as ranking_score FROM activity.fs_features_ranking fr
+	join fs_features_ranking_group frg on frg.id=fr.group_id
+	join fs_selection_method sm on sm.id = frg.method_id
+    join fs_method_model_scoring ms on ms.method_id=frg.method_id and ms.data_set=frg.data_set
+	join (select frga.data_set, feature, avg(ranking) as avg_ranking, avg(ranking - msa.nr_features) as distance
+			from fs_features_ranking fra
+			join fs_features_ranking_group frga on fra.group_id = frga.id
+			join fs_selection_method sma on sma.id = frga.method_id
+			join fs_method_model_scoring msa on msa.data_set = frga.data_set and msa.method_id=frga.method_id
+			where sma.use_for_ordering=1
+			group by data_set, feature
+			order by data_set, avg_ranking) as favg
+			on favg.data_set = frg.data_set and favg.feature=fr.feature
+	where sm.use_for_ordering = 1
+	group by frg.data_set, fr.feature
+	order by frg.data_set, ranking_score
